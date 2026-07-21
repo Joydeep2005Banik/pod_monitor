@@ -1,0 +1,35 @@
+2026-07-18 13:51:07,590 - pod_monitor.main - INFO - Starting Pod Monitor with 3 pods
+2026-07-18 13:51:07,591 - pod_monitor.main - INFO - AI Analysis: Enabled
+2026-07-18 13:51:07,591 - pod_monitor.main - INFO - AI Provider: mock
+2026-07-18 14:12:08,897 - pod_monitor.main - INFO - Starting Pod Monitor with 3 pods
+2026-07-18 14:12:08,897 - pod_monitor.main - INFO - AI Analysis: Enabled
+2026-07-18 14:12:08,897 - pod_monitor.main - INFO - AI Provider: mock
+2026-07-18 14:12:08,907 - pod_monitor.ssh_client - ERROR - Failed to connect to 192.168.1.100: [Errno 2] No such file or directory: '/home/Joydeep/.ssh/id_rsa'
+2026-07-18 14:12:08,907 - pod_monitor.monitor - ERROR - Failed to connect to pod 192.168.1.100
+2026-07-18 14:12:08,908 - pod_monitor.ssh_client - ERROR - Failed to connect to 192.168.1.101: [Errno 2] No such file or directory: '/home/Joydeep/.ssh/id_rsa'
+2026-07-18 14:12:08,908 - pod_monitor.monitor - ERROR - Failed to connect to pod 192.168.1.101
+2026-07-18 14:12:08,908 - pod_monitor.ssh_client - ERROR - Failed to connect to 192.168.1.102: [Errno 2] No such file or directory: '/home/Joydeep/.ssh/id_rsa'
+2026-07-18 14:12:08,908 - pod_monitor.monitor - ERROR - Failed to connect to pod 192.168.1.102
+2026-07-18 14:12:08,908 - pod_monitor.monitor - INFO - Monitoring 0 pods
+2026-07-18 14:12:08,908 - pod_monitor.main - ERROR - Error: asyncio.run() cannot be called from a running event loop
+2026-07-18 14:12:08,908 - pod_monitor.monitor - INFO - Monitoring stopped
+2026-07-18 14:15:28,168 - pod_monitor.main - INFO - Starting Pod Monitor with 3 pods
+2026-07-18 14:15:28,168 - pod_monitor.main - INFO - AI Analysis: Enabled
+2026-07-18 14:15:28,168 - pod_monitor.main - INFO - AI Provider: mock
+2026-07-18 14:15:28,175 - pod_monitor.ssh_client - ERROR - Failed to connect to 192.168.1.100: [Errno 2] No such file or directory: '/home/Joydeep/.ssh/id_rsa'
+2026-07-18 14:15:28,175 - pod_monitor.monitor - ERROR - Failed to connect to pod 192.168.1.100
+2026-07-18 14:15:28,176 - pod_monitor.ssh_client - ERROR - Failed to connect to 192.168.1.101: [Errno 2] No such file or directory: '/home/Joydeep/.ssh/id_rsa'
+2026-07-18 14:15:28,176 - pod_monitor.monitor - ERROR - Failed to connect to pod 192.168.1.101
+2026-07-18 14:15:28,177 - pod_monitor.ssh_client - ERROR - Failed to connect to 192.168.1.102: [Errno 2] No such file or directory: '/home/Joydeep/.ssh/id_rsa'
+2026-07-18 14:15:28,177 - pod_monitor.monitor - ERROR - Failed to connect to pod 192.168.1.102
+2026-07-18 14:15:28,177 - pod_monitor.monitor - INFO - Monitoring 0 pods
+2026-07-18 14:16:15,993 - pod_monitor.main - INFO - Starting Pod Monitor with 3 pods
+2026-07-18 14:16:15,993 - pod_monitor.main - INFO - AI Analysis: Enabled
+2026-07-18 14:16:15,993 - pod_monitor.main - INFO - AI Provider: mock
+2026-07-18 14:16:15,999 - pod_monitor.ssh_client - ERROR - Failed to connect to 192.168.1.100: [Errno 2] No such file or directory: '/home/Joydeep/.ssh/id_rsa'
+2026-07-18 14:16:15,999 - pod_monitor.monitor - ERROR - Failed to connect to pod 192.168.1.100
+2026-07-18 14:16:16,000 - pod_monitor.ssh_client - ERROR - Failed to connect to 192.168.1.101: [Errno 2] No such file or directory: '/home/Joydeep/.ssh/id_rsa'
+2026-07-18 14:16:16,000 - pod_monitor.monitor - ERROR - Failed to connect to pod 192.168.1.101
+2026-07-18 14:16:16,001 - pod_monitor.ssh_client - ERROR - Failed to connect to 192.168.1.102: [Errno 2] No such file or directory: '/home/Joydeep/.ssh/id_rsa'
+2026-07-18 14:16:16,001 - pod_monitor.monitor - ERROR - Failed to connect to pod 192.168.1.102
+2026-07-18 14:16:16,001 - pod_monitor.monitor - INFO - Monitoring 0 pods

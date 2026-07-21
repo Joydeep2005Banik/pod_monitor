@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  # Mock pod for testing
+  test-pod-1:
+    image: alpine:latest
+    command: 
+      - sh
+      - -c
+      - |
+        apk add --no-cache openssh-server
+        echo "root:password" | chpasswd
+        ssh-keygen -A
+        /usr/sbin/sshd -D
+    ports:
+      - "2222:22"
+    volumes:
+      - ./test-logs:/var/log
+    networks:
+      - pod-network
+
+  test-pod-2:
+    image: alpine:latest
+    command: 
+      - sh
+      - -c
+      - |
+        apk add --no-cache openssh-server
+        echo "root:password" | chpasswd
+        ssh-keygen -A
+        /usr/sbin/sshd -D
+    ports:
+      - "2223:22"
+    networks:
+      - pod-network
+
+networks:
+  pod-network:
+    driver: bridge

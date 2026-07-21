@@ -1,0 +1,66 @@
+# Pod Monitor Configuration
+# All fields are optional - defaults will be used
+
+# SSH Connection Settings
+ssh:
+  user: "root"
+  password: ""  # Or use key_path
+  key_path: "~/.ssh/id_rsa"
+  port: 22
+  timeout: 30
+
+# AI Analysis Settings
+ai:
+  enabled: true
+  provider: "mock"  # Options: openai, ollama, mock
+  
+  # For OpenAI
+  openai_token: ""  # Or set OPENAI_API_KEY env var
+  openai_model: "gpt-3.5-turbo"
+  
+  # For Ollama (local)
+  ollama_url: "http://localhost:11434"
+  ollama_model: "mistral"
+  
+  # General AI settings
+  mock_mode: true
+  max_tokens: 500
+  temperature: 0.3
+
+# Pod Monitoring Settings
+monitor:
+  # List of pod IPs or hostnames to monitor
+  pods:
+    - "192.168.1.100"
+    - "192.168.1.101"
+    - "192.168.1.102"
+  
+  # Kubernetes namespaces to check
+  namespaces:
+    - "default"
+    - "production"
+  
+  # How often to check logs (seconds)
+  refresh_interval: 10
+  
+  # Number of log lines to fetch per check
+  log_lines_to_fetch: 100
+  
+  # Number of errors before marking pod unhealthy
+  anomaly_threshold: 3
+  
+  # Maximum logs to keep per pod in memory
+  max_logs_per_pod: 1000
+
+# Alerting Configuration
+alerts:
+  enabled: false
+  
+  # Slack integration
+  slack_webhook: ""  # Or set SLACK_WEBHOOK env var
+  
+  # Email alerts
+  email: ""  # Or set ALERT_EMAIL env var
+  
+  # Only alert on issues above this severity
+  severity_threshold: "high"  # low, medium, high, critical
