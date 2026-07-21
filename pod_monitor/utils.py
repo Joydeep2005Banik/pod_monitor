@@ -122,16 +122,16 @@ def get_severity_color(severity: Severity) -> str:
     }
     return colors.get(severity, "#ffffff")
 
-def get_log_level_emoji(level: LogLevel) -> str:
-    """Get emoji for log level."""
-    emojis = {
-        LogLevel.CRITICAL: "🚨",
-        LogLevel.ERROR: "❌",
-        LogLevel.WARNING: "⚠️",
-        LogLevel.INFO: "ℹ️",
-        LogLevel.DEBUG: "🐛",
+def get_log_level_tag(level: LogLevel) -> str:
+    """Get ASCII tag for log level."""
+    tags = {
+        LogLevel.CRITICAL: "[CRIT]",
+        LogLevel.ERROR: "[ERR]",
+        LogLevel.WARNING: "[WARN]",
+        LogLevel.INFO: "[INFO]",
+        LogLevel.DEBUG: "[DBG]",
     }
-    return emojis.get(level, "📝")
+    return tags.get(level, "[INFO]")
 
 def truncate_message(message: str, max_length: int = 200) -> str:
     """Truncate a message if it's too long."""
@@ -198,7 +198,7 @@ def generate_report(pod_statuses: List, format: str = "text") -> str:
     
     for ps in pod_statuses:
         report += f"Pod: {ps.name} ({ps.ip})\n"
-        report += f"Status: {'✅ Healthy' if ps.healthy else '❌ Unhealthy'}\n"
+        report += f"Status: {'[HEALTHY]' if ps.healthy else '[UNHEALTHY]'}\n"
         report += f"Errors: {ps.error_count}\n"
         report += f"Anomalies: {len(ps.anomalies)}\n"
         report += f"CPU: {ps.metrics.cpu_usage:.1f}%\n"
