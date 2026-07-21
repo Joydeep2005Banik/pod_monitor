@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pod_monitor"
+version = "1.0.0"
+description = "Real-time pod monitoring with AI-powered anomaly detection"
+requires-python = ">=3.10"
+
+[tool.setuptools.packages.find]
+include = ["pod_monitor*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"

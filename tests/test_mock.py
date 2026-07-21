@@ -114,11 +114,11 @@ class MockUIMonitor:
     async def stop(self):
         pass
 
-async def run_mock_test():
+def run_mock_test():
     """Run the UI with mock data."""
     mock_monitor = MockUIMonitor()
     app = PodMonitorUI(mock_monitor)
     app.run()
 
 if __name__ == "__main__":
-    asyncio.run(run_mock_test())
+    run_mock_test()

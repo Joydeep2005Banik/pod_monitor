@@ -1,0 +1,5 @@
+Metadata-Version: 2.4
+Name: pod_monitor
+Version: 1.0.0
+Summary: Real-time pod monitoring with AI-powered anomaly detection
+Requires-Python: >=3.10

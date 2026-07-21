@@ -5,7 +5,7 @@ from typing import List, Optional
 from datetime import datetime
 import logging
 
-from .models import LogEntry, Anomaly, Severity, PodStatus
+from .models import LogEntry, LogLevel, Anomaly, Severity, PodStatus
 
 logger = logging.getLogger(__name__)
 
