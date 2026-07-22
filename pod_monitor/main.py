@@ -63,10 +63,10 @@ async def main():
         sys.exit(1)
     
     if not config.monitor.pods:
-        logger.error("No pods configured. Please add pod IPs to config.yaml")
+        logger.error("No pods configured. Please add pod names to config.yaml under monitor.pods")
         sys.exit(1)
     
-    logger.info(f"Starting Pod Monitor with {len(config.monitor.pods)} pods")
+    logger.info(f"Starting Pod Monitor with {len(config.monitor.pods)} pods (mode={config.monitor.mode})")
     logger.info(f"AI Analysis: {'Enabled' if config.ai.enabled else 'Disabled'}")
     logger.info(f"AI Provider: {config.ai.provider}")
     

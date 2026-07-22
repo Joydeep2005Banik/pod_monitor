@@ -1,7 +1,7 @@
 # Pod Monitor Configuration
 # All fields are optional - defaults will be used
 
-# SSH Connection Settings
+# SSH Connection Settings (only used when monitor.mode = "ssh")
 ssh:
   user: "root"
   password: ""  # Or use key_path
@@ -29,22 +29,23 @@ ai:
 
 # Pod Monitoring Settings
 monitor:
-  # List of pod IPs or hostnames to monitor
+  # Mode: "kubectl" (local kubectl) or "ssh" (remote via SSH)
+  mode: "kubectl"
+
+  # List of pod names to monitor (kubectl mode)
+  # For SSH mode, these would be IP addresses instead
   pods:
-    - "192.168.1.100"
-    - "192.168.1.101"
-    - "192.168.1.102"
-  
+    - "log-generator"
+
   # Kubernetes namespaces to check
   namespaces:
     - "default"
-    - "production"
   
   # How often to check logs (seconds)
-  refresh_interval: 10
+  refresh_interval: 5
   
   # Number of log lines to fetch per check
-  log_lines_to_fetch: 100
+  log_lines_to_fetch: 50
   
   # Number of errors before marking pod unhealthy
   anomaly_threshold: 3

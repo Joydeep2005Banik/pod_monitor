@@ -188,6 +188,7 @@ class PodMonitorUI(App):
     #metrics-content {
         height: 1fr;
         padding: 0 1;
+        overflow-y: auto;
     }
 
     #ai-content {
@@ -198,7 +199,6 @@ class PodMonitorUI(App):
 
     .metric-row {
         color: #c9d1d9;
-        margin-bottom: 1;
     }
 
     .anomaly-entry {
@@ -259,7 +259,7 @@ class PodMonitorUI(App):
                     yield ListView(id="pod-list")
                 with Container(id="metrics-panel"):
                     yield Static("[ Metrics ]", classes="panel-title")
-                    yield Container(id="metrics-content")
+                    yield ScrollableContainer(id="metrics-content")
 
             # ── Bottom row ──
             with Horizontal(id="bottom-row"):
@@ -317,7 +317,7 @@ class PodMonitorUI(App):
             log_view.add_log(f"[dim]{timestamp}[/dim] {tag} {log.message}", log.level)
 
         # ── Metrics ──
-        metrics_panel = self.query_one("#metrics-content", Container)
+        metrics_panel = self.query_one("#metrics-content", ScrollableContainer)
         metrics_panel.remove_children()
 
         m = pod.metrics

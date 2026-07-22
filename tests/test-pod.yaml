@@ -1,0 +1,42 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: log-generator
+  namespace: default
+  labels:
+    app: log-generator
+spec:
+  containers:
+    - name: logger
+      image: busybox:latest
+      command:
+        - sh
+        - -c
+        - |
+          i=0
+          while true; do
+            i=$((i + 1))
+            r=$((RANDOM % 100))
+            ts=$(date '+%Y-%m-%dT%H:%M:%S')
+            if [ $r -lt 5 ]; then
+              echo "$ts CRITICAL: Out of memory in worker pool $((RANDOM % 8))"
+            elif [ $r -lt 15 ]; then
+              echo "$ts ERROR: Database connection timeout (Host: 10.0.0.$((RANDOM % 255)))"
+            elif [ $r -lt 25 ]; then
+              echo "$ts ERROR: Failed to authenticate user user_$((RANDOM % 1000))"
+            elif [ $r -lt 40 ]; then
+              echo "$ts WARNING: High memory usage detected: $((60 + RANDOM % 40))%"
+            elif [ $r -lt 50 ]; then
+              echo "$ts WARNING: Slow query detected ($((RANDOM % 5)).$((RANDOM % 9))s)"
+            else
+              echo "$ts INFO: Request #$i processed in $((RANDOM % 200))ms"
+            fi
+            sleep $((RANDOM % 3 + 1))
+          done
+      resources:
+        requests:
+          cpu: "50m"
+          memory: "32Mi"
+        limits:
+          cpu: "100m"
+          memory: "64Mi"

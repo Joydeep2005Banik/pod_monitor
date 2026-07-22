@@ -62,6 +62,7 @@ class AIConfig:
 @dataclass
 class MonitorConfig:
     """Pod monitoring configuration."""
+    mode: str = "kubectl"  # "kubectl" (local) or "ssh" (remote)
     pods: List[str] = field(default_factory=list)
     namespaces: List[str] = field(default_factory=lambda: ["default"])
     refresh_interval: int = 10
@@ -72,6 +73,7 @@ class MonitorConfig:
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "MonitorConfig":
         return cls(
+            mode=data.get('mode', 'kubectl'),
             pods=data.get('pods', []),
             namespaces=data.get('namespaces', ["default"]),
             refresh_interval=data.get('refresh_interval', 10),
