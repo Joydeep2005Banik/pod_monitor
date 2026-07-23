@@ -75,17 +75,17 @@ def _log_level_tag(level: LogLevel) -> str:
 class LogViewer(RichLog):
     """Log viewer with colored output — no emoji."""
 
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("markup", True)
+        super().__init__(*args, **kwargs)
+
     def add_log(self, message: str, level: LogLevel = LogLevel.INFO):
-        """Add a colored log message."""
-        colors = {
-            LogLevel.CRITICAL: "red bold",
-            LogLevel.ERROR: "red",
-            LogLevel.WARNING: "yellow",
-            LogLevel.INFO: "white",
-            LogLevel.DEBUG: "dim",
-        }
-        color = colors.get(level, "white")
-        self.write(f"[{color}]{message}[/{color}]")
+        """Add a colored log message.
+
+        The *message* is expected to contain Rich markup already
+        (e.g. from ``_log_level_tag``), so we write it directly.
+        """
+        self.write(message)
 
 
 class PodListItem(ListItem):
