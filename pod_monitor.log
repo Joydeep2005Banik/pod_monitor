@@ -102,3 +102,15 @@
 2026-07-23 13:18:10,743 - pod_monitor.kubectl_client - INFO - kubectl verified pod default/log-generator
 2026-07-23 13:18:10,744 - pod_monitor.monitor - INFO - kubectl: monitoring pod default/log-generator
 2026-07-23 13:18:10,744 - pod_monitor.monitor - INFO - Monitoring 1 pods (mode=kubectl)
+2026-07-23 13:24:01,922 - pod_monitor.main - INFO - Starting Pod Monitor with 1 pods (mode=kubectl)
+2026-07-23 13:24:01,923 - pod_monitor.main - INFO - AI Analysis: Enabled
+2026-07-23 13:24:01,923 - pod_monitor.main - INFO - AI Provider: mock
+2026-07-23 13:24:01,991 - pod_monitor.kubectl_client - INFO - kubectl verified pod default/log-generator
+2026-07-23 13:24:01,991 - pod_monitor.monitor - INFO - kubectl: monitoring pod default/log-generator
+2026-07-23 13:24:01,991 - pod_monitor.monitor - INFO - Monitoring 1 pods (mode=kubectl)
+2026-07-23 13:25:26,584 - pod_monitor.main - INFO - Starting Pod Monitor with 1 pods (mode=kubectl)
+2026-07-23 13:25:26,585 - pod_monitor.main - INFO - AI Analysis: Enabled
+2026-07-23 13:25:26,585 - pod_monitor.main - INFO - AI Provider: mock
+2026-07-23 13:25:26,670 - pod_monitor.kubectl_client - INFO - kubectl verified pod default/log-generator
+2026-07-23 13:25:26,670 - pod_monitor.monitor - INFO - kubectl: monitoring pod default/log-generator
+2026-07-23 13:25:26,670 - pod_monitor.monitor - INFO - Monitoring 1 pods (mode=kubectl)

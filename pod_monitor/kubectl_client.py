@@ -233,6 +233,23 @@ class KubectlClient:
                 logs.append(self.parse_log_line(line, pod_name))
         return logs
 
+    # Regex that matches a leading ISO-ish timestamp (with optional fractional
+    # seconds and timezone) followed by an optional log-level keyword + colon.
+    # Examples it strips:
+    #   2026-07-23T13:18:10                 INFO: …
+    #   2026-07-23T13:18:10.640Z            WARNING: …
+    #   2026-07-23T13:18:10.640+05:30       ERROR …
+    _TS_PREFIX_RE = re.compile(
+        r"^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}"  # date+time
+        r"(?:[.,]\d+)?"                               # fractional seconds
+        r"(?:Z|[+-]\d{2}:\d{2})?"                     # timezone
+        r"\s*"
+    )
+    _LEVEL_PREFIX_RE = re.compile(
+        r"^(?:CRITICAL|ERROR|WARN(?:ING)?|INFO|DEBUG)\s*:?\s*",
+        re.IGNORECASE,
+    )
+
     def parse_log_line(self, line: str, pod_name: str) -> LogEntry:
         """Parse a single log line into a LogEntry."""
         # Detect level
@@ -256,10 +273,15 @@ class KubectlClient:
             except Exception:
                 pass
 
+        # Strip leading timestamp + level prefix so the UI doesn't show
+        # them twice (they are already rendered from the structured fields).
+        message = self._TS_PREFIX_RE.sub("", line)
+        message = self._LEVEL_PREFIX_RE.sub("", message).strip() or line
+
         return LogEntry(
             timestamp=timestamp,
             level=level,
-            message=line,
+            message=message,
             pod_ip=pod_name,   # no SSH host; use pod name as identifier
             pod_name=pod_name,
         )

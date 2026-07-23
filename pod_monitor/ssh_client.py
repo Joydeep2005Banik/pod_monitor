@@ -118,6 +118,19 @@ class SSHClient:
                 logs.append(self.parse_log_line(line, pod_name))
         return logs
 
+    # Regex that matches a leading ISO-ish timestamp (with optional fractional
+    # seconds and timezone) followed by an optional log-level keyword + colon.
+    _TS_PREFIX_RE = re.compile(
+        r"^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}"  # date+time
+        r"(?:[.,]\d+)?"                               # fractional seconds
+        r"(?:Z|[+-]\d{2}:\d{2})?"                     # timezone
+        r"\s*"
+    )
+    _LEVEL_PREFIX_RE = re.compile(
+        r"^(?:CRITICAL|ERROR|WARN(?:ING)?|INFO|DEBUG)\s*:?\s*",
+        re.IGNORECASE,
+    )
+
     def parse_log_line(self, line: str, pod_name: str) -> LogEntry:
         """Parse a single log line."""
         # Try to detect log level
@@ -133,18 +146,22 @@ class SSHClient:
 
         # Try to extract timestamp
         timestamp = datetime.now()
-        # Simple timestamp extraction (can be enhanced)
         time_match = re.search(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}', line)
         if time_match:
             try:
                 timestamp = datetime.fromisoformat(time_match.group())
-            except:
+            except Exception:
                 pass
+
+        # Strip leading timestamp + level prefix so the UI doesn't show
+        # them twice (they are already rendered from the structured fields).
+        message = self._TS_PREFIX_RE.sub("", line)
+        message = self._LEVEL_PREFIX_RE.sub("", message).strip() or line
 
         return LogEntry(
             timestamp=timestamp,
             level=level,
-            message=line,
+            message=message,
             pod_ip=self.host,
             pod_name=pod_name
         )
