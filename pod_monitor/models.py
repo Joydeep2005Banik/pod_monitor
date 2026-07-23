@@ -62,6 +62,10 @@ class PodStatus:
     total_logs: int = 0
     restarts: int = 0
     node_name: str = ""
+    pod_ip: str = ""
+    phase: str = ""
+    image: str = ""
+    labels: str = ""
 
 @dataclass
 class Config:

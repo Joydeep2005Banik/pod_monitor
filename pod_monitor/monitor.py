@@ -130,9 +130,16 @@ class PodMonitor:
                 # Get metrics from kubectl top (may be empty without metrics-server)
                 if len(logs) > 0:
                     result = await client.get_pod_metrics(pod.name, pod.namespace)
-                    # KubectlClient returns (PodMetrics, restarts, node_name);
-                    # SSHClient returns a plain PodMetrics.
-                    if isinstance(result, tuple):
+                    # KubectlClient returns a dict; SSHClient returns PodMetrics.
+                    if isinstance(result, dict):
+                        pod.metrics = result["metrics"]
+                        pod.restarts = result["restarts"]
+                        pod.node_name = result["node_name"]
+                        pod.pod_ip = result.get("pod_ip", "")
+                        pod.phase = result.get("phase", "")
+                        pod.image = result.get("image", "")
+                        pod.labels = result.get("labels", "")
+                    elif isinstance(result, tuple):
                         pod.metrics, pod.restarts, pod.node_name = result
                     else:
                         pod.metrics = result

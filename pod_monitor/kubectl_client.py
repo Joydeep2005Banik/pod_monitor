@@ -129,16 +129,22 @@ class KubectlClient:
 
     async def get_pod_metrics(
         self, pod_name: str, namespace: str = "default"
-    ) -> "tuple[PodMetrics, int, str]":
-        """Get CPU/memory metrics, restart count, and node name.
+    ) -> dict:
+        """Get CPU/memory metrics and pod metadata.
 
-        Returns ``(PodMetrics, restarts, node_name)``.  Tries ``kubectl top``
-        first for live CPU/memory, then falls back to resource limits from the
-        pod spec.  Restarts and node name are always fetched from the spec.
+        Returns a dict with keys: ``metrics``, ``restarts``, ``node_name``,
+        ``pod_ip``, ``phase``, ``image``, ``labels``.
         """
         metrics = PodMetrics()
-        restarts: int = 0
-        node_name: str = ""
+        info: dict = {
+            "metrics": metrics,
+            "restarts": 0,
+            "node_name": "",
+            "pod_ip": "",
+            "phase": "",
+            "image": "",
+            "labels": "",
+        }
 
         # ── 1. Try kubectl top (requires metrics-server) ──
         top_cmd = [
@@ -167,7 +173,7 @@ class KubectlClient:
         except Exception as e:
             logger.debug("Error getting kubectl top metrics: %s", e)
 
-        # ── 2. Get resource limits, uptime, restarts & node from pod spec ──
+        # ── 2. Get resource limits, uptime, restarts, node, IP, phase, image, labels from pod spec ──
         spec_cmd = [
             self._kubectl, "get", "pod", pod_name,
             "-n", namespace,
@@ -177,7 +183,11 @@ class KubectlClient:
                   "{.spec.containers[0].resources.requests.memory}|"
                   "{.status.startTime}|"
                   "{.spec.nodeName}|"
-                  "{.status.containerStatuses[0].restartCount}",
+                  "{.status.containerStatuses[0].restartCount}|"
+                  "{.status.podIP}|"
+                  "{.status.phase}|"
+                  "{.spec.containers[0].image}|"
+                  "{.metadata.labels.app}",
         ]
 
         try:
@@ -190,10 +200,11 @@ class KubectlClient:
 
             if proc.returncode == 0:
                 parts = stdout.decode().strip().split("|")
-                # Pad to at least 7 fields so unpacking never fails
-                parts += [""] * (7 - len(parts))
+                # Pad to at least 11 fields so unpacking never fails
+                parts += [""] * (11 - len(parts))
                 (cpu_limit_str, mem_limit_str, _, _,
-                 start_time_str, node_str, restarts_str) = parts[:7]
+                 start_time_str, node_str, restarts_str,
+                 pod_ip_str, phase_str, image_str, label_str) = parts[:11]
 
                 # Parse CPU limit (e.g. "100m" → 100 millicores)
                 if cpu_limit_str:
@@ -226,17 +237,18 @@ class KubectlClient:
                     except Exception:
                         pass
 
-                # Node name
-                node_name = node_str.strip()
-
-                # Restart count
+                info["node_name"] = node_str.strip()
                 if restarts_str.strip().isdigit():
-                    restarts = int(restarts_str.strip())
+                    info["restarts"] = int(restarts_str.strip())
+                info["pod_ip"] = pod_ip_str.strip()
+                info["phase"] = phase_str.strip()
+                info["image"] = image_str.strip()
+                info["labels"] = label_str.strip()
 
         except Exception as e:
             logger.debug("Error getting pod spec: %s", e)
 
-        return metrics, restarts, node_name
+        return info
 
     # ------------------------------------------------------------------
     # Log parsing (mirrors SSHClient logic)

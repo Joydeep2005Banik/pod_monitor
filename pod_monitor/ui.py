@@ -350,6 +350,29 @@ class PodMonitorUI(App):
         node_display = pod.node_name or "[dim]unknown[/dim]"
         age_display = _format_age(m.uptime)
 
+        # Phase color
+        phase_raw = pod.phase or "Unknown"
+        phase_colors = {
+            "Running": "green", "Succeeded": "green",
+            "Pending": "yellow", "ContainerCreating": "yellow",
+            "Failed": "red", "CrashLoopBackOff": "red",
+            "Unknown": "dim",
+        }
+        pc = phase_colors.get(phase_raw, "white")
+        phase_display = f"[{pc}]{phase_raw}[/{pc}]"
+
+        # Pod IP
+        ip_display = pod.pod_ip or "[dim]n/a[/dim]"
+
+        # Image — strip registry prefix for brevity
+        img = pod.image or ""
+        if "/" in img:
+            img = img.rsplit("/", 1)[-1]
+        img_display = img or "[dim]n/a[/dim]"
+
+        # Labels
+        lbl_display = pod.labels or "[dim]none[/dim]"
+
         mem_pct = m.memory_usage / max(m.memory_limit, 1) * 100
 
         metrics_panel.mount(
@@ -358,7 +381,10 @@ class PodMonitorUI(App):
             Static(f"ERR  {_bar(m.error_rate)}", classes="metric-row", markup=True),
             Static(f"CONN {m.active_connections}  REQ {m.request_rate:.1f}/s", classes="metric-row", markup=True),
             Static(f"RST  {rst_display}  NODE {node_display}", classes="metric-row", markup=True),
-            Static(f"AGE  {age_display}", classes="metric-row", markup=True),
+            Static(f"AGE  {age_display}  STS {phase_display}", classes="metric-row", markup=True),
+            Static(f"IP   {ip_display}", classes="metric-row", markup=True),
+            Static(f"IMG  {img_display}", classes="metric-row", markup=True),
+            Static(f"APP  {lbl_display}", classes="metric-row", markup=True),
         )
 
         # ── AI Insights ──

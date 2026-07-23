@@ -156,3 +156,26 @@
 2026-07-23 14:15:51,011 - pod_monitor.kubectl_client - INFO - kubectl verified pod default/log-generator
 2026-07-23 14:15:51,012 - pod_monitor.monitor - INFO - kubectl: monitoring pod default/log-generator
 2026-07-23 14:15:51,012 - pod_monitor.monitor - INFO - Monitoring 1 pods (mode=kubectl)
+2026-07-23 22:19:43,524 - pod_monitor.main - INFO - Starting Pod Monitor with 1 pods (mode=kubectl)
+2026-07-23 22:19:43,524 - pod_monitor.main - INFO - AI Analysis: Enabled
+2026-07-23 22:19:43,524 - pod_monitor.main - INFO - AI Provider: mock
+2026-07-23 22:22:13,663 - pod_monitor.kubectl_client - ERROR - kubectl check failed for default/log-generator: E0723 22:20:13.654363   16469 memcache.go:265] "Unhandled Error" err="couldn't get current server API group list: Get \"https://192.168.49.2:8443/api?timeout=32s\": dial tcp 192.168.49.2:8443: i/o timeout"
+E0723 22:20:43.656531   16469 memcache.go:265] "Unhandled Error" err="couldn't get current server API group list: Get \"https://192.168.49.2:8443/api?timeout=32s\": dial tcp 192.168.49.2:8443: i/o timeout"
+E0723 22:21:13.658089   16469 memcache.go:265] "Unhandled Error" err="couldn't get current server API group list: Get \"https://192.168.49.2:8443/api?timeout=32s\": dial tcp 192.168.49.2:8443: i/o timeout"
+E0723 22:21:43.659407   16469 memcache.go:265] "Unhandled Error" err="couldn't get current server API group list: Get \"https://192.168.49.2:8443/api?timeout=32s\": dial tcp 192.168.49.2:8443: i/o timeout"
+E0723 22:22:13.660298   16469 memcache.go:265] "Unhandled Error" err="couldn't get current server API group list: Get \"https://192.168.49.2:8443/api?timeout=32s\": dial tcp 192.168.49.2:8443: i/o timeout"
+Unable to connect to the server: dial tcp 192.168.49.2:8443: i/o timeout
+2026-07-23 22:22:13,663 - pod_monitor.monitor - ERROR - kubectl: pod default/log-generator not found or not ready
+2026-07-23 22:22:13,663 - pod_monitor.monitor - INFO - Monitoring 0 pods (mode=kubectl)
+2026-07-23 22:28:52,947 - pod_monitor.main - INFO - Starting Pod Monitor with 1 pods (mode=kubectl)
+2026-07-23 22:28:52,947 - pod_monitor.main - INFO - AI Analysis: Enabled
+2026-07-23 22:28:52,947 - pod_monitor.main - INFO - AI Provider: mock
+2026-07-23 22:28:53,028 - pod_monitor.kubectl_client - INFO - kubectl verified pod default/log-generator
+2026-07-23 22:28:53,028 - pod_monitor.monitor - INFO - kubectl: monitoring pod default/log-generator
+2026-07-23 22:28:53,028 - pod_monitor.monitor - INFO - Monitoring 1 pods (mode=kubectl)
+2026-07-23 22:31:42,180 - pod_monitor.main - INFO - Starting Pod Monitor with 1 pods (mode=kubectl)
+2026-07-23 22:31:42,180 - pod_monitor.main - INFO - AI Analysis: Enabled
+2026-07-23 22:31:42,180 - pod_monitor.main - INFO - AI Provider: mock
+2026-07-23 22:31:42,239 - pod_monitor.kubectl_client - INFO - kubectl verified pod default/log-generator
+2026-07-23 22:31:42,239 - pod_monitor.monitor - INFO - kubectl: monitoring pod default/log-generator
+2026-07-23 22:31:42,239 - pod_monitor.monitor - INFO - Monitoring 1 pods (mode=kubectl)
