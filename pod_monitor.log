@@ -179,3 +179,15 @@ Unable to connect to the server: dial tcp 192.168.49.2:8443: i/o timeout
 2026-07-23 22:31:42,239 - pod_monitor.kubectl_client - INFO - kubectl verified pod default/log-generator
 2026-07-23 22:31:42,239 - pod_monitor.monitor - INFO - kubectl: monitoring pod default/log-generator
 2026-07-23 22:31:42,239 - pod_monitor.monitor - INFO - Monitoring 1 pods (mode=kubectl)
+2026-07-23 22:41:53,714 - pod_monitor.main - INFO - Starting Pod Monitor with 1 pods (mode=kubectl)
+2026-07-23 22:41:53,715 - pod_monitor.main - INFO - AI Analysis: Enabled
+2026-07-23 22:41:53,715 - pod_monitor.main - INFO - AI Provider: mock
+2026-07-23 22:41:53,786 - pod_monitor.kubectl_client - INFO - kubectl verified pod default/log-generator
+2026-07-23 22:41:53,786 - pod_monitor.monitor - INFO - kubectl: monitoring pod default/log-generator
+2026-07-23 22:41:53,786 - pod_monitor.monitor - INFO - Monitoring 1 pods (mode=kubectl)
+2026-07-23 22:52:43,147 - pod_monitor.main - INFO - Starting Pod Monitor with 1 pods (mode=kubectl)
+2026-07-23 22:52:43,147 - pod_monitor.main - INFO - AI Analysis: Enabled
+2026-07-23 22:52:43,147 - pod_monitor.main - INFO - AI Provider: mock
+2026-07-23 22:52:43,263 - pod_monitor.kubectl_client - INFO - kubectl verified pod default/log-generator
+2026-07-23 22:52:43,263 - pod_monitor.monitor - INFO - kubectl: monitoring pod default/log-generator
+2026-07-23 22:52:43,263 - pod_monitor.monitor - INFO - Monitoring 1 pods (mode=kubectl)

@@ -112,13 +112,15 @@ class PodListItem(ListItem):
 
     def __init__(self, pod_status: PodStatus):
         self.pod_status = pod_status
-        label = f"{_status_tag(pod_status.healthy)}  {pod_status.name}  {pod_status.ip}"
+        ip_suffix = f"  {pod_status.ip}" if pod_status.ip and pod_status.ip != pod_status.name else ""
+        label = f"{_status_tag(pod_status.healthy)}  {pod_status.name}{ip_suffix}"
         super().__init__(Label(label, markup=True))
 
     def update_status(self, pod_status: PodStatus):
         """Update the displayed status."""
         self.pod_status = pod_status
-        label = f"{_status_tag(pod_status.healthy)}  {pod_status.name}  {pod_status.ip}"
+        ip_suffix = f"  {pod_status.ip}" if pod_status.ip and pod_status.ip != pod_status.name else ""
+        label = f"{_status_tag(pod_status.healthy)}  {pod_status.name}{ip_suffix}"
         self.children[0].update(label)
 
 
