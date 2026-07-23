@@ -60,6 +60,8 @@ class PodStatus:
     metrics: PodMetrics = field(default_factory=PodMetrics)
     error_count: int = 0
     total_logs: int = 0
+    restarts: int = 0
+    node_name: str = ""
 
 @dataclass
 class Config:

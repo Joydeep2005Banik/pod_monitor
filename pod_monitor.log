@@ -114,3 +114,45 @@
 2026-07-23 13:25:26,670 - pod_monitor.kubectl_client - INFO - kubectl verified pod default/log-generator
 2026-07-23 13:25:26,670 - pod_monitor.monitor - INFO - kubectl: monitoring pod default/log-generator
 2026-07-23 13:25:26,670 - pod_monitor.monitor - INFO - Monitoring 1 pods (mode=kubectl)
+2026-07-23 13:26:52,383 - pod_monitor.main - INFO - Starting Pod Monitor with 1 pods (mode=kubectl)
+2026-07-23 13:26:52,383 - pod_monitor.main - INFO - AI Analysis: Enabled
+2026-07-23 13:26:52,383 - pod_monitor.main - INFO - AI Provider: mock
+2026-07-23 13:26:52,444 - pod_monitor.kubectl_client - INFO - kubectl verified pod default/log-generator
+2026-07-23 13:26:52,444 - pod_monitor.monitor - INFO - kubectl: monitoring pod default/log-generator
+2026-07-23 13:26:52,444 - pod_monitor.monitor - INFO - Monitoring 1 pods (mode=kubectl)
+2026-07-23 14:02:37,242 - pod_monitor.main - INFO - Starting Pod Monitor with 1 pods (mode=kubectl)
+2026-07-23 14:02:37,243 - pod_monitor.main - INFO - AI Analysis: Enabled
+2026-07-23 14:02:37,243 - pod_monitor.main - INFO - AI Provider: mock
+2026-07-23 14:02:37,376 - pod_monitor.kubectl_client - INFO - kubectl verified pod default/log-generator
+2026-07-23 14:02:37,377 - pod_monitor.monitor - INFO - kubectl: monitoring pod default/log-generator
+2026-07-23 14:02:37,377 - pod_monitor.monitor - INFO - Monitoring 1 pods (mode=kubectl)
+2026-07-23 14:05:56,651 - pod_monitor.main - INFO - Starting Pod Monitor with 1 pods (mode=kubectl)
+2026-07-23 14:05:56,651 - pod_monitor.main - INFO - AI Analysis: Enabled
+2026-07-23 14:05:56,651 - pod_monitor.main - INFO - AI Provider: mock
+2026-07-23 14:05:56,715 - pod_monitor.kubectl_client - INFO - kubectl verified pod default/log-generator
+2026-07-23 14:05:56,715 - pod_monitor.monitor - INFO - kubectl: monitoring pod default/log-generator
+2026-07-23 14:05:56,715 - pod_monitor.monitor - INFO - Monitoring 1 pods (mode=kubectl)
+2026-07-23 14:09:27,995 - pod_monitor.main - INFO - Starting Pod Monitor with 1 pods (mode=kubectl)
+2026-07-23 14:09:27,995 - pod_monitor.main - INFO - AI Analysis: Enabled
+2026-07-23 14:09:27,995 - pod_monitor.main - INFO - AI Provider: mock
+2026-07-23 14:09:28,067 - pod_monitor.kubectl_client - INFO - kubectl verified pod default/log-generator
+2026-07-23 14:09:28,067 - pod_monitor.monitor - INFO - kubectl: monitoring pod default/log-generator
+2026-07-23 14:09:28,068 - pod_monitor.monitor - INFO - Monitoring 1 pods (mode=kubectl)
+2026-07-23 14:12:01,776 - pod_monitor.main - INFO - Starting Pod Monitor with 1 pods (mode=kubectl)
+2026-07-23 14:12:01,776 - pod_monitor.main - INFO - AI Analysis: Enabled
+2026-07-23 14:12:01,776 - pod_monitor.main - INFO - AI Provider: mock
+2026-07-23 14:12:01,836 - pod_monitor.kubectl_client - INFO - kubectl verified pod default/log-generator
+2026-07-23 14:12:01,837 - pod_monitor.monitor - INFO - kubectl: monitoring pod default/log-generator
+2026-07-23 14:12:01,837 - pod_monitor.monitor - INFO - Monitoring 1 pods (mode=kubectl)
+2026-07-23 14:13:36,294 - pod_monitor.main - INFO - Starting Pod Monitor with 1 pods (mode=kubectl)
+2026-07-23 14:13:36,294 - pod_monitor.main - INFO - AI Analysis: Enabled
+2026-07-23 14:13:36,294 - pod_monitor.main - INFO - AI Provider: mock
+2026-07-23 14:13:36,358 - pod_monitor.kubectl_client - INFO - kubectl verified pod default/log-generator
+2026-07-23 14:13:36,358 - pod_monitor.monitor - INFO - kubectl: monitoring pod default/log-generator
+2026-07-23 14:13:36,358 - pod_monitor.monitor - INFO - Monitoring 1 pods (mode=kubectl)
+2026-07-23 14:15:50,951 - pod_monitor.main - INFO - Starting Pod Monitor with 1 pods (mode=kubectl)
+2026-07-23 14:15:50,951 - pod_monitor.main - INFO - AI Analysis: Enabled
+2026-07-23 14:15:50,951 - pod_monitor.main - INFO - AI Provider: mock
+2026-07-23 14:15:51,011 - pod_monitor.kubectl_client - INFO - kubectl verified pod default/log-generator
+2026-07-23 14:15:51,012 - pod_monitor.monitor - INFO - kubectl: monitoring pod default/log-generator
+2026-07-23 14:15:51,012 - pod_monitor.monitor - INFO - Monitoring 1 pods (mode=kubectl)

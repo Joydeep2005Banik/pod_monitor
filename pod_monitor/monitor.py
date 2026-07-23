@@ -129,7 +129,13 @@ class PodMonitor:
 
                 # Get metrics from kubectl top (may be empty without metrics-server)
                 if len(logs) > 0:
-                    pod.metrics = await client.get_pod_metrics(pod.name, pod.namespace)
+                    result = await client.get_pod_metrics(pod.name, pod.namespace)
+                    # KubectlClient returns (PodMetrics, restarts, node_name);
+                    # SSHClient returns a plain PodMetrics.
+                    if isinstance(result, tuple):
+                        pod.metrics, pod.restarts, pod.node_name = result
+                    else:
+                        pod.metrics = result
 
                 # ── Compute log-derived metrics ──
                 total = len(logs)

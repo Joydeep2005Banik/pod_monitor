@@ -129,10 +129,16 @@ class KubectlClient:
 
     async def get_pod_metrics(
         self, pod_name: str, namespace: str = "default"
-    ) -> PodMetrics:
-        """Get CPU/memory metrics. Tries ``kubectl top`` first, then falls
-        back to resource limits from the pod spec."""
+    ) -> "tuple[PodMetrics, int, str]":
+        """Get CPU/memory metrics, restart count, and node name.
+
+        Returns ``(PodMetrics, restarts, node_name)``.  Tries ``kubectl top``
+        first for live CPU/memory, then falls back to resource limits from the
+        pod spec.  Restarts and node name are always fetched from the spec.
+        """
         metrics = PodMetrics()
+        restarts: int = 0
+        node_name: str = ""
 
         # ── 1. Try kubectl top (requires metrics-server) ──
         top_cmd = [
@@ -161,7 +167,7 @@ class KubectlClient:
         except Exception as e:
             logger.debug("Error getting kubectl top metrics: %s", e)
 
-        # ── 2. Get resource limits + uptime from pod spec ──
+        # ── 2. Get resource limits, uptime, restarts & node from pod spec ──
         spec_cmd = [
             self._kubectl, "get", "pod", pod_name,
             "-n", namespace,
@@ -169,7 +175,9 @@ class KubectlClient:
                   "{.spec.containers[0].resources.limits.memory}|"
                   "{.spec.containers[0].resources.requests.cpu}|"
                   "{.spec.containers[0].resources.requests.memory}|"
-                  "{.status.startTime}",
+                  "{.status.startTime}|"
+                  "{.spec.nodeName}|"
+                  "{.status.containerStatuses[0].restartCount}",
         ]
 
         try:
@@ -182,44 +190,53 @@ class KubectlClient:
 
             if proc.returncode == 0:
                 parts = stdout.decode().strip().split("|")
-                if len(parts) >= 5:
-                    cpu_limit_str, mem_limit_str, _, _, start_time_str = parts
+                # Pad to at least 7 fields so unpacking never fails
+                parts += [""] * (7 - len(parts))
+                (cpu_limit_str, mem_limit_str, _, _,
+                 start_time_str, node_str, restarts_str) = parts[:7]
 
-                    # Parse CPU limit (e.g. "100m" → 100 millicores)
-                    if cpu_limit_str:
-                        cpu_val = cpu_limit_str.replace("m", "")
-                        try:
-                            metrics.cpu_limit = float(cpu_val) / 1000.0 * 100
-                        except ValueError:
-                            pass
+                # Parse CPU limit (e.g. "100m" → 100 millicores)
+                if cpu_limit_str:
+                    cpu_val = cpu_limit_str.replace("m", "")
+                    try:
+                        metrics.cpu_limit = float(cpu_val) / 1000.0 * 100
+                    except ValueError:
+                        pass
 
-                    # Parse memory limit (e.g. "64Mi")
-                    if mem_limit_str:
-                        mem_val = mem_limit_str.replace("Mi", "").replace("Gi", "")
-                        try:
-                            val = float(mem_val)
-                            if "Gi" in mem_limit_str:
-                                val *= 1024
-                            metrics.memory_limit = val
-                        except ValueError:
-                            pass
+                # Parse memory limit (e.g. "64Mi")
+                if mem_limit_str:
+                    mem_val = mem_limit_str.replace("Mi", "").replace("Gi", "")
+                    try:
+                        val = float(mem_val)
+                        if "Gi" in mem_limit_str:
+                            val *= 1024
+                        metrics.memory_limit = val
+                    except ValueError:
+                        pass
 
-                    # Calculate uptime from startTime
-                    if start_time_str:
-                        try:
-                            start = datetime.fromisoformat(
-                                start_time_str.replace("Z", "+00:00")
-                            )
-                            metrics.uptime = (
-                                datetime.now(start.tzinfo) - start
-                            ).total_seconds()
-                        except Exception:
-                            pass
+                # Calculate uptime from startTime
+                if start_time_str:
+                    try:
+                        start = datetime.fromisoformat(
+                            start_time_str.replace("Z", "+00:00")
+                        )
+                        metrics.uptime = (
+                            datetime.now(start.tzinfo) - start
+                        ).total_seconds()
+                    except Exception:
+                        pass
+
+                # Node name
+                node_name = node_str.strip()
+
+                # Restart count
+                if restarts_str.strip().isdigit():
+                    restarts = int(restarts_str.strip())
 
         except Exception as e:
             logger.debug("Error getting pod spec: %s", e)
 
-        return metrics
+        return metrics, restarts, node_name
 
     # ------------------------------------------------------------------
     # Log parsing (mirrors SSHClient logic)

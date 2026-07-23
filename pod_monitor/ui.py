@@ -16,7 +16,7 @@ from .models import PodStatus, Anomaly, LogLevel, Severity
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _bar(value: float, width: int = 18) -> str:
+def _bar(value: float, width: int = 12) -> str:
     """Render an ASCII bar like  [||||||       ] 48.2%"""
     clamped = max(0.0, min(100.0, value))
     filled = int(round(clamped / 100 * width))
@@ -66,6 +66,25 @@ def _log_level_tag(level: LogLevel) -> str:
     opening, label = mapping.get(level, ("[white]", "INFO"))
     closing = opening.replace("[", "[/", 1)
     return f"{opening}{label}{closing}"
+
+
+def _format_age(seconds: float) -> str:
+    """Format an uptime/age value into a compact human-readable string.
+
+    Examples: ``3d 4h``, ``2h 15m``, ``45m``, ``12s``.
+    """
+    if seconds <= 0:
+        return "--"
+    days, rem = divmod(int(seconds), 86400)
+    hours, rem = divmod(rem, 3600)
+    minutes, secs = divmod(rem, 60)
+    if days:
+        return f"{days}d {hours}h"
+    if hours:
+        return f"{hours}h {minutes}m"
+    if minutes:
+        return f"{minutes}m {secs}s"
+    return f"{secs}s"
 
 
 # ---------------------------------------------------------------------------
@@ -130,7 +149,7 @@ class PodMonitorUI(App):
 
     /* ---- top row ---- */
     #top-row {
-        height: 45%;
+        height: 55%;
     }
 
     #pod-panel {
@@ -148,7 +167,7 @@ class PodMonitorUI(App):
 
     /* ---- bottom row ---- */
     #bottom-row {
-        height: 55%;
+        height: 45%;
         margin-top: 1;
     }
 
@@ -170,7 +189,6 @@ class PodMonitorUI(App):
         color: #58a6ff;
         text-style: bold;
         padding: 0 1;
-        margin-bottom: 1;
     }
 
     #pod-list {
@@ -321,12 +339,26 @@ class PodMonitorUI(App):
         metrics_panel.remove_children()
 
         m = pod.metrics
+
+        # Restart count — highlight in red when non-zero
+        rst_val = pod.restarts
+        if rst_val > 0:
+            rst_display = f"[red]{rst_val}[/red]"
+        else:
+            rst_display = f"[green]{rst_val}[/green]"
+
+        node_display = pod.node_name or "[dim]unknown[/dim]"
+        age_display = _format_age(m.uptime)
+
+        mem_pct = m.memory_usage / max(m.memory_limit, 1) * 100
+
         metrics_panel.mount(
-            Static(f"CPU   {_bar(m.cpu_usage)}", classes="metric-row", markup=True),
-            Static(f"MEM   {_bar(m.memory_usage / max(m.memory_limit, 1) * 100)}  ({m.memory_usage:.0f}/{m.memory_limit:.0f} MiB)", classes="metric-row", markup=True),
-            Static(f"ERR   {_bar(m.error_rate)}", classes="metric-row", markup=True),
-            Static(f"CONN  {m.active_connections} active", classes="metric-row", markup=True),
-            Static(f"REQ   {m.request_rate:.1f} req/s", classes="metric-row", markup=True),
+            Static(f"CPU  {_bar(m.cpu_usage)}", classes="metric-row", markup=True),
+            Static(f"MEM  {_bar(mem_pct)}", classes="metric-row", markup=True),
+            Static(f"ERR  {_bar(m.error_rate)}", classes="metric-row", markup=True),
+            Static(f"CONN {m.active_connections}  REQ {m.request_rate:.1f}/s", classes="metric-row", markup=True),
+            Static(f"RST  {rst_display}  NODE {node_display}", classes="metric-row", markup=True),
+            Static(f"AGE  {age_display}", classes="metric-row", markup=True),
         )
 
         # ── AI Insights ──
