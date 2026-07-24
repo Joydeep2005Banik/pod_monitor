@@ -57,7 +57,11 @@ class PodMonitor:
 
     async def _connect_pod_kubectl(self, pod_name: str, namespace: str) -> bool:
         """Set up a local kubectl client for a pod."""
-        client = KubectlClient(pod_name=pod_name, namespace=namespace)
+        client = KubectlClient(
+            pod_name=pod_name, 
+            namespace=namespace, 
+            context=self.config.monitor.context
+        )
         connected = await client.connect()
         if connected:
             self.clients[pod_name] = client

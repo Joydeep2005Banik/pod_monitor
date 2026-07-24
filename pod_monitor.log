@@ -191,3 +191,110 @@ Unable to connect to the server: dial tcp 192.168.49.2:8443: i/o timeout
 2026-07-23 22:52:43,263 - pod_monitor.kubectl_client - INFO - kubectl verified pod default/log-generator
 2026-07-23 22:52:43,263 - pod_monitor.monitor - INFO - kubectl: monitoring pod default/log-generator
 2026-07-23 22:52:43,263 - pod_monitor.monitor - INFO - Monitoring 1 pods (mode=kubectl)
+2026-07-24 13:48:44,610 - pod_monitor.main - INFO - Starting Pod Monitor with 1 pods (mode=kubectl)
+2026-07-24 13:48:44,611 - pod_monitor.main - INFO - AI Analysis: Enabled
+2026-07-24 13:48:44,611 - pod_monitor.main - INFO - AI Provider: mock
+2026-07-24 13:48:44,713 - pod_monitor.kubectl_client - ERROR - kubectl check failed for default/log-generator: Error from server (NotFound): pods "log-generator" not found
+2026-07-24 13:48:44,713 - pod_monitor.monitor - ERROR - kubectl: pod default/log-generator not found or not ready
+2026-07-24 13:48:44,713 - pod_monitor.monitor - INFO - Monitoring 0 pods (mode=kubectl)
+2026-07-24 13:57:48,228 - pod_monitor.main - INFO - Starting Pod Monitor with 1 pods (mode=kubectl)
+2026-07-24 13:57:48,229 - pod_monitor.main - INFO - AI Analysis: Enabled
+2026-07-24 13:57:48,229 - pod_monitor.main - INFO - AI Provider: mock
+2026-07-24 13:57:48,323 - pod_monitor.kubectl_client - INFO - kubectl verified pod default/log-generator
+2026-07-24 13:57:48,324 - pod_monitor.monitor - INFO - kubectl: monitoring pod default/log-generator
+2026-07-24 13:57:48,324 - pod_monitor.monitor - INFO - Monitoring 1 pods (mode=kubectl)
+2026-07-24 13:58:56,061 - pod_monitor.main - INFO - Starting Pod Monitor with 1 pods (mode=kubectl)
+2026-07-24 13:58:56,062 - pod_monitor.main - INFO - AI Analysis: Enabled
+2026-07-24 13:58:56,062 - pod_monitor.main - INFO - AI Provider: mock
+2026-07-24 13:58:56,138 - pod_monitor.kubectl_client - INFO - kubectl verified pod default/log-generator
+2026-07-24 13:58:56,138 - pod_monitor.monitor - INFO - kubectl: monitoring pod default/log-generator
+2026-07-24 13:58:56,138 - pod_monitor.monitor - INFO - Monitoring 1 pods (mode=kubectl)
+2026-07-24 14:00:30,264 - pod_monitor.main - INFO - Starting Pod Monitor with 1 pods (mode=kubectl)
+2026-07-24 14:00:30,264 - pod_monitor.main - INFO - AI Analysis: Enabled
+2026-07-24 14:00:30,264 - pod_monitor.main - INFO - AI Provider: mock
+2026-07-24 14:00:30,341 - pod_monitor.kubectl_client - INFO - kubectl verified pod default/log-generator
+2026-07-24 14:00:30,341 - pod_monitor.monitor - INFO - kubectl: monitoring pod default/log-generator
+2026-07-24 14:00:30,341 - pod_monitor.monitor - INFO - Monitoring 1 pods (mode=kubectl)
+2026-07-24 14:37:06,335 - pod_monitor.main - INFO - Starting Pod Monitor with 2 pods (mode=kubectl)
+2026-07-24 14:37:06,335 - pod_monitor.main - INFO - AI Analysis: Enabled
+2026-07-24 14:37:06,336 - pod_monitor.main - INFO - AI Provider: mock
+2026-07-24 14:37:06,410 - pod_monitor.kubectl_client - INFO - kubectl verified pod default/log-generator
+2026-07-24 14:37:06,411 - pod_monitor.monitor - INFO - kubectl: monitoring pod default/log-generator
+2026-07-24 14:37:06,480 - pod_monitor.kubectl_client - INFO - kubectl verified pod default/my-pod
+2026-07-24 14:37:06,480 - pod_monitor.monitor - INFO - kubectl: monitoring pod default/my-pod
+2026-07-24 14:37:06,480 - pod_monitor.monitor - INFO - Monitoring 2 pods (mode=kubectl)
+2026-07-24 21:34:54,475 - pod_monitor.main - INFO - Starting Pod Monitor with 2 pods (mode=kubectl)
+2026-07-24 21:34:54,475 - pod_monitor.main - INFO - AI Analysis: Enabled
+2026-07-24 21:34:54,475 - pod_monitor.main - INFO - AI Provider: mock
+2026-07-24 21:36:51,882 - pod_monitor.main - INFO - Starting Pod Monitor with 2 pods (mode=kubectl)
+2026-07-24 21:36:51,882 - pod_monitor.main - INFO - AI Analysis: Enabled
+2026-07-24 21:36:51,882 - pod_monitor.main - INFO - AI Provider: mock
+2026-07-24 21:36:51,947 - pod_monitor.kubectl_client - INFO - kubectl verified pod default/log-generator
+2026-07-24 21:36:51,947 - pod_monitor.monitor - INFO - kubectl: monitoring pod default/log-generator
+2026-07-24 21:36:52,010 - pod_monitor.kubectl_client - INFO - kubectl verified pod default/my-pod
+2026-07-24 21:36:52,010 - pod_monitor.monitor - INFO - kubectl: monitoring pod default/my-pod
+2026-07-24 21:36:52,010 - pod_monitor.monitor - INFO - Monitoring 2 pods (mode=kubectl)
+2026-07-24 21:38:37,547 - pod_monitor.main - INFO - Starting Pod Monitor with 2 pods (mode=kubectl)
+2026-07-24 21:38:37,547 - pod_monitor.main - INFO - AI Analysis: Enabled
+2026-07-24 21:38:37,547 - pod_monitor.main - INFO - AI Provider: mock
+2026-07-24 21:38:37,607 - pod_monitor.kubectl_client - INFO - kubectl verified pod default/log-generator
+2026-07-24 21:38:37,607 - pod_monitor.monitor - INFO - kubectl: monitoring pod default/log-generator
+2026-07-24 21:38:37,670 - pod_monitor.kubectl_client - INFO - kubectl verified pod default/my-pod
+2026-07-24 21:38:37,670 - pod_monitor.monitor - INFO - kubectl: monitoring pod default/my-pod
+2026-07-24 21:38:37,670 - pod_monitor.monitor - INFO - Monitoring 2 pods (mode=kubectl)
+2026-07-24 21:53:46,069 - pod_monitor.main - INFO - Starting Pod Monitor with 2 pods (mode=kubectl)
+2026-07-24 21:53:46,069 - pod_monitor.main - INFO - AI Analysis: Enabled
+2026-07-24 21:53:46,069 - pod_monitor.main - INFO - AI Provider: mock
+2026-07-24 21:53:46,147 - pod_monitor.kubectl_client - INFO - kubectl verified pod default/log-generator
+2026-07-24 21:53:46,147 - pod_monitor.monitor - INFO - kubectl: monitoring pod default/log-generator
+2026-07-24 21:53:46,203 - pod_monitor.kubectl_client - INFO - kubectl verified pod default/my-pod
+2026-07-24 21:53:46,204 - pod_monitor.monitor - INFO - kubectl: monitoring pod default/my-pod
+2026-07-24 21:53:46,204 - pod_monitor.monitor - INFO - Monitoring 2 pods (mode=kubectl)
+2026-07-24 21:55:26,449 - pod_monitor.main - INFO - Starting Pod Monitor with 2 pods (mode=kubectl)
+2026-07-24 21:55:26,449 - pod_monitor.main - INFO - AI Analysis: Enabled
+2026-07-24 21:55:26,449 - pod_monitor.main - INFO - AI Provider: mock
+2026-07-24 21:55:26,513 - pod_monitor.kubectl_client - INFO - kubectl verified pod default/log-generator
+2026-07-24 21:55:26,514 - pod_monitor.monitor - INFO - kubectl: monitoring pod default/log-generator
+2026-07-24 21:55:26,586 - pod_monitor.kubectl_client - INFO - kubectl verified pod default/my-pod
+2026-07-24 21:55:26,587 - pod_monitor.monitor - INFO - kubectl: monitoring pod default/my-pod
+2026-07-24 21:55:26,587 - pod_monitor.monitor - INFO - Monitoring 2 pods (mode=kubectl)
+2026-07-24 21:57:02,747 - pod_monitor.main - INFO - Starting Pod Monitor with 2 pods (mode=kubectl)
+2026-07-24 21:57:02,747 - pod_monitor.main - INFO - AI Analysis: Enabled
+2026-07-24 21:57:02,747 - pod_monitor.main - INFO - AI Provider: mock
+2026-07-24 21:57:02,806 - pod_monitor.kubectl_client - INFO - kubectl verified pod default/log-generator
+2026-07-24 21:57:02,806 - pod_monitor.monitor - INFO - kubectl: monitoring pod default/log-generator
+2026-07-24 21:57:02,861 - pod_monitor.kubectl_client - INFO - kubectl verified pod default/my-pod
+2026-07-24 21:57:02,861 - pod_monitor.monitor - INFO - kubectl: monitoring pod default/my-pod
+2026-07-24 21:57:02,861 - pod_monitor.monitor - INFO - Monitoring 2 pods (mode=kubectl)
+2026-07-24 22:05:37,702 - pod_monitor.main - INFO - Starting Pod Monitor with 2 pods (mode=kubectl)
+2026-07-24 22:05:37,702 - pod_monitor.main - INFO - AI Analysis: Enabled
+2026-07-24 22:05:37,702 - pod_monitor.main - INFO - AI Provider: mock
+2026-07-24 22:05:37,766 - pod_monitor.kubectl_client - INFO - kubectl verified pod default/log-generator
+2026-07-24 22:05:37,766 - pod_monitor.monitor - INFO - kubectl: monitoring pod default/log-generator
+2026-07-24 22:05:37,824 - pod_monitor.kubectl_client - INFO - kubectl verified pod default/my-pod
+2026-07-24 22:05:37,824 - pod_monitor.monitor - INFO - kubectl: monitoring pod default/my-pod
+2026-07-24 22:05:37,824 - pod_monitor.monitor - INFO - Monitoring 2 pods (mode=kubectl)
+2026-07-24 22:06:09,118 - pod_monitor.ai_analyzer - ERROR - Ollama analysis failed: No module named 'aiohttp'
+2026-07-24 22:06:09,119 - pod_monitor.ai_analyzer - ERROR - Ollama analysis failed: No module named 'aiohttp'
+2026-07-24 22:06:14,298 - pod_monitor.ai_analyzer - ERROR - Ollama analysis failed: No module named 'aiohttp'
+2026-07-24 22:06:14,301 - pod_monitor.ai_analyzer - ERROR - Ollama analysis failed: No module named 'aiohttp'
+2026-07-24 22:06:19,470 - pod_monitor.ai_analyzer - ERROR - Ollama analysis failed: No module named 'aiohttp'
+2026-07-24 22:06:19,472 - pod_monitor.ai_analyzer - ERROR - Ollama analysis failed: No module named 'aiohttp'
+2026-07-24 22:06:24,646 - pod_monitor.ai_analyzer - ERROR - Ollama analysis failed: No module named 'aiohttp'
+2026-07-24 22:06:24,648 - pod_monitor.ai_analyzer - ERROR - Ollama analysis failed: No module named 'aiohttp'
+2026-07-24 22:06:29,823 - pod_monitor.ai_analyzer - ERROR - Ollama analysis failed: No module named 'aiohttp'
+2026-07-24 22:06:29,826 - pod_monitor.ai_analyzer - ERROR - Ollama analysis failed: No module named 'aiohttp'
+2026-07-24 22:06:35,002 - pod_monitor.ai_analyzer - ERROR - Ollama analysis failed: No module named 'aiohttp'
+2026-07-24 22:06:35,003 - pod_monitor.ai_analyzer - ERROR - Ollama analysis failed: No module named 'aiohttp'
+2026-07-24 22:06:40,175 - pod_monitor.ai_analyzer - ERROR - Ollama analysis failed: No module named 'aiohttp'
+2026-07-24 22:06:40,175 - pod_monitor.ai_analyzer - ERROR - Ollama analysis failed: No module named 'aiohttp'
+2026-07-24 22:06:45,364 - pod_monitor.ai_analyzer - ERROR - Ollama analysis failed: No module named 'aiohttp'
+2026-07-24 22:06:45,364 - pod_monitor.ai_analyzer - ERROR - Ollama analysis failed: No module named 'aiohttp'
+2026-07-24 22:06:50,539 - pod_monitor.ai_analyzer - ERROR - Ollama analysis failed: No module named 'aiohttp'
+2026-07-24 22:06:50,540 - pod_monitor.ai_analyzer - ERROR - Ollama analysis failed: No module named 'aiohttp'
+2026-07-24 22:06:55,755 - pod_monitor.ai_analyzer - ERROR - Ollama analysis failed: No module named 'aiohttp'
+2026-07-24 22:06:55,755 - pod_monitor.ai_analyzer - ERROR - Ollama analysis failed: No module named 'aiohttp'
+2026-07-24 22:07:00,951 - pod_monitor.ai_analyzer - ERROR - Ollama analysis failed: No module named 'aiohttp'
+2026-07-24 22:07:00,953 - pod_monitor.ai_analyzer - ERROR - Ollama analysis failed: No module named 'aiohttp'
+2026-07-24 22:07:06,158 - pod_monitor.ai_analyzer - ERROR - Ollama analysis failed: No module named 'aiohttp'
+2026-07-24 22:07:06,159 - pod_monitor.ai_analyzer - ERROR - Ollama analysis failed: No module named 'aiohttp'

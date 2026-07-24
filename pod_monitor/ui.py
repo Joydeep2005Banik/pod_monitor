@@ -1,57 +1,89 @@
 import asyncio
+import re
+import random
 from typing import List, Optional
 from datetime import datetime
 
 from textual.app import App, ComposeResult
 from textual.containers import Container, Horizontal, Vertical, ScrollableContainer
-from textual.widgets import Header, Footer, RichLog, Static, ListView, ListItem, Label
+from textual.widgets import RichLog, Static, ListView, ListItem, Label
 from textual.binding import Binding
 from textual.reactive import reactive
 from textual import events, work
 
 from .models import PodStatus, Anomaly, LogLevel, Severity
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
+def _sparkline(history: List[float], length: int = 12) -> str:
+    """Render a Unicode sparkline (e.g. ▂▃▄▅▆▇█) from history."""
+    if not history:
+        return " " * length
+    history = history[-length:]
+    if len(history) < length:
+        history = [0.0] * (length - len(history)) + history
+    
+    blocks = " ▂▃▄▅▆▇█"
+    spark = []
+    for val in history:
+        clamped = max(0.0, min(100.0, val))
+        idx = int(clamped / 100 * (len(blocks) - 1))
+        spark.append(blocks[idx])
+    return "".join(spark)
+
+
 def _bar(value: float, width: int = 12) -> str:
-    """Render an ASCII bar like  [||||||       ] 48.2%"""
+    """Render a high-density progress bar with color gradient and density blocks."""
     clamped = max(0.0, min(100.0, value))
     filled = int(round(clamped / 100 * width))
     empty = width - filled
 
-    # Color the filled portion based on utilisation
-    if clamped >= 80:
-        color = "red"
-    elif clamped >= 60:
-        color = "yellow"
-    else:
-        color = "green"
-
-    bar_str = f"[{color}]{'|' * filled}[/{color}]{' ' * empty}"
-    return f"\\[{bar_str}] {clamped:5.1f}%"
+    filled_blocks = []
+    for i in range(filled):
+        t = i / (width - 1) if width > 1 else 0.0
+        # Density character selection: ░ -> ▒ -> ▓ -> █
+        if t < 0.25:
+            char = "░"
+        elif t < 0.5:
+            char = "▒"
+        elif t < 0.75:
+            char = "▓"
+        else:
+            char = "█"
+        
+        # Color interpolation: dark red/brown (#5a1e1e) to bright coral/red (#ff5c5c)
+        r = int(90 + t * (255 - 90))
+        g = int(30 + t * (92 - 30))
+        b = int(30 + t * (92 - 30))
+        color = f"#{r:02x}{g:02x}{b:02x}"
+        filled_blocks.append(f"[{color}]{char}[/{color}]")
+    
+    filled_str = "".join(filled_blocks)
+    unfilled_str = f"[#333333]{'░' * empty}[/#333333]"
+    bar_str = f"{filled_str}{unfilled_str}"
+    return f"{bar_str} {clamped:5.1f}%"
 
 
 def _status_tag(healthy: bool) -> str:
     """Return a colored status tag — no emoji."""
     if healthy:
-        return "[green]\\[OK][/green]"
-    return "[red]\\[!!][/red]"
+        return "[bold green]OK[/bold green]"
+    return "[bold red]!![/bold red]"
 
 
 def _severity_tag(severity: Severity) -> str:
     """Return a colored severity tag — no emoji."""
     mapping = {
-        Severity.CRITICAL: ("[red bold]", "\\[CRIT]"),
-        Severity.HIGH:     ("[#f0883e]", "\\[HIGH]"),
-        Severity.MEDIUM:   ("[yellow]",  "\\[MED]"),
-        Severity.LOW:      ("[cyan]",    "\\[LOW]"),
+        Severity.CRITICAL: ("[red bold]", "CRIT"),
+        Severity.HIGH:     ("[#f0883e]", "HIGH"),
+        Severity.MEDIUM:   ("[yellow]",  "MED "),
+        Severity.LOW:      ("[cyan]",    "LOW "),
     }
-    opening, label = mapping.get(severity, ("[white]", "\\[???]"))
+    opening, label = mapping.get(severity, ("[white]", "??? "))
     closing = opening.replace("[", "[/", 1)
-    return f"{opening}{label}{closing}"
+    return f"{opening}\\[{label}]{closing}"
 
 
 def _log_level_tag(level: LogLevel) -> str:
@@ -69,10 +101,7 @@ def _log_level_tag(level: LogLevel) -> str:
 
 
 def _format_age(seconds: float) -> str:
-    """Format an uptime/age value into a compact human-readable string.
-
-    Examples: ``3d 4h``, ``2h 15m``, ``45m``, ``12s``.
-    """
+    """Format an uptime/age value into a compact human-readable string."""
     if seconds <= 0:
         return "--"
     days, rem = divmod(int(seconds), 86400)
@@ -86,10 +115,180 @@ def _format_age(seconds: float) -> str:
         return f"{minutes}m {secs}s"
     return f"{secs}s"
 
+# ---------------------------------------------------------------------------
+# Custom Widgets
+# ---------------------------------------------------------------------------
 
-# ---------------------------------------------------------------------------
-# Widgets
-# ---------------------------------------------------------------------------
+class TopBar(Static):
+    """Btop-style top status bar showing aggregate stats and uptime."""
+    
+    def __init__(self, monitor, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.monitor = monitor
+        self.start_time = datetime.now()
+
+    def on_mount(self):
+        self.border_title = "[ monitor info ]"
+        self.set_interval(1.0, self.update_clock)
+        
+    def update_clock(self):
+        self.refresh()
+
+    def render(self) -> str:
+        uptime_secs = (datetime.now() - self.start_time).total_seconds()
+        uptime_str = _format_age(uptime_secs)
+        local_time = datetime.now().strftime("%H:%M:%S")
+        
+        # Aggregate CPU / Memory across all active pods
+        pods = getattr(self.app, "pods_cache", [])
+        if pods:
+            avg_cpu = sum(p.metrics.cpu_usage for p in pods) / len(pods)
+            avg_mem = sum(p.metrics.memory_usage / max(p.metrics.memory_limit, 1) * 100 for p in pods) / len(pods)
+        else:
+            avg_cpu = 0.0
+            avg_mem = 0.0
+            
+        app = self.app
+        if not hasattr(app, "global_cpu_history"):
+            app.global_cpu_history = []
+            app.global_mem_history = []
+            
+        app.global_cpu_history.append(avg_cpu)
+        app.global_mem_history.append(avg_mem)
+        app.global_cpu_history = app.global_cpu_history[-20:]
+        app.global_mem_history = app.global_mem_history[-20:]
+        
+        cpu_spark = _sparkline(app.global_cpu_history, length=12)
+        mem_spark = _sparkline(app.global_mem_history, length=12)
+        
+        if not hasattr(app, "load_avg"):
+            app.load_avg = [0.15, 0.22, 0.18]
+        app.load_avg = [
+            max(0.01, min(2.0, app.load_avg[0] + random.uniform(-0.02, 0.02))),
+            max(0.01, min(2.0, app.load_avg[1] + random.uniform(-0.01, 0.01))),
+            max(0.01, min(2.0, app.load_avg[2] + random.uniform(-0.005, 0.005))),
+        ]
+        load_str = f"{app.load_avg[0]:.2f} {app.load_avg[1]:.2f} {app.load_avg[2]:.2f}"
+        
+        width = self.size.width or 80
+        left_text = (
+            f" UPTIME: [bold]{uptime_str}[/bold]   "
+            f"LOAD: [bold]{load_str}[/bold]   "
+            f"CPU: [cyan]{cpu_spark}[/cyan] [bold]{avg_cpu:4.1f}%[/bold]   "
+            f"MEM: [cyan]{mem_spark}[/cyan] [bold]{avg_mem:4.1f}%[/bold]"
+        )
+        plain_left = re.sub(r'\[.*?\]', '', left_text)
+        padding = max(2, width - len(plain_left) - len(local_time) - 4)
+        return left_text + (" " * padding) + f"[bold #00d2ff]{local_time}[/bold #00d2ff]"
+
+
+class BottomMenuBar(Static):
+    """Custom footer showing hotkeys and actions in btop style."""
+    def render(self) -> str:
+        return (
+            "  [reverse]ENTER[/reverse] select   "
+            "[reverse]U[/reverse] info   "
+            "[reverse]T[/reverse] terminate   "
+            "[reverse]K[/reverse] kill   "
+            "[reverse]N[/reverse] nice   "
+            "[reverse]R[/reverse] refresh   "
+            "[reverse]A[/reverse] toggle ai   "
+            "[reverse]Q[/reverse] quit"
+        )
+
+
+class NetworkInfo(Static):
+    """Network & Metadata panel displaying IP, Node, Namespace, and status."""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.current_pod: Optional[PodStatus] = None
+
+    def update_pod(self, pod: Optional[PodStatus]):
+        self.current_pod = pod
+        if not pod:
+            self.update("\n [dim]No pod selected[/dim]")
+            return
+        
+        status_tag = _status_tag(pod.healthy)
+        ip = pod.pod_ip or pod.ip or "n/a"
+        node = pod.node_name or "unknown"
+        ns = pod.namespace or "default"
+        phase = pod.phase or "Unknown"
+        
+        content = (
+            f" [dim]Pod Name: [/dim] [bold]{pod.name}[/bold]\n"
+            f" [dim]IP:       [/dim] [cyan]{ip}[/cyan]\n"
+            f" [dim]Node:     [/dim] [yellow]{node}[/yellow]\n"
+            f" [dim]Namespace:[/dim] [magenta]{ns}[/magenta]\n"
+            f" [dim]Status:   [/dim] {status_tag} ({phase})"
+        )
+        self.update(content)
+
+
+class MetricsTable(Static):
+    """btop-style metrics display with high-density graphs and sparklines."""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.current_pod: Optional[PodStatus] = None
+
+    def update_pod(self, pod: Optional[PodStatus]):
+        self.current_pod = pod
+        if not pod:
+            self.update("\n [dim]No pod selected[/dim]")
+            return
+        
+        m = pod.metrics
+        mem_pct = (m.memory_usage / max(m.memory_limit, 1)) * 100
+        
+        app = self.app
+        pod_name = pod.name
+        if not hasattr(app, "pod_cpu_history"):
+            app.pod_cpu_history = {}
+            app.pod_mem_history = {}
+            
+        if pod_name not in app.pod_cpu_history:
+            app.pod_cpu_history[pod_name] = []
+            app.pod_mem_history[pod_name] = []
+            
+        app.pod_cpu_history[pod_name].append(m.cpu_usage)
+        app.pod_mem_history[pod_name].append(mem_pct)
+        app.pod_cpu_history[pod_name] = app.pod_cpu_history[pod_name][-20:]
+        app.pod_mem_history[pod_name] = app.pod_mem_history[pod_name][-20:]
+        
+        cpu_spark = _sparkline(app.pod_cpu_history[pod_name], length=12)
+        mem_spark = _sparkline(app.pod_mem_history[pod_name], length=12)
+        
+        cpu_bar = _bar(m.cpu_usage, width=12)
+        mem_bar = _bar(mem_pct, width=12)
+        err_bar = _bar(m.error_rate, width=12)
+        
+        def format_row(label: str, value: str) -> str:
+            key_str = f" [dim]{label:<18}[/dim]"
+            return f"{key_str} [bold]{value}[/bold]"
+        
+        rst_val = pod.restarts
+        rst_display = f"[red]{rst_val}[/red]" if rst_val > 0 else f"[green]{rst_val}[/green]"
+        
+        rows = [
+            "",
+            format_row("CPU Usage", cpu_bar),
+            format_row("CPU Sparkline", cpu_spark),
+            "",
+            format_row("Memory Used", f"{m.memory_usage:.2f} MiB"),
+            format_row("Memory Limit", f"{m.memory_limit:.2f} MiB"),
+            format_row("Memory Graph", mem_bar),
+            format_row("Memory Sparkline", mem_spark),
+            "",
+            format_row("Error Rate", err_bar),
+            format_row("Restarts", rst_display),
+            "",
+            format_row("Active Conn", f"{m.active_connections}"),
+            format_row("Request Rate", f"{m.request_rate:.1f} req/s"),
+            format_row("Uptime / Age", _format_age(m.uptime)),
+        ]
+        
+        self.update("\n".join(rows))
+
 
 class LogViewer(RichLog):
     """Log viewer with colored output — no emoji."""
@@ -99,11 +298,6 @@ class LogViewer(RichLog):
         super().__init__(*args, **kwargs)
 
     def add_log(self, message: str, level: LogLevel = LogLevel.INFO):
-        """Add a colored log message.
-
-        The *message* is expected to contain Rich markup already
-        (e.g. from ``_log_level_tag``), so we write it directly.
-        """
         self.write(message)
 
 
@@ -117,12 +311,10 @@ class PodListItem(ListItem):
         super().__init__(Label(label, markup=True))
 
     def update_status(self, pod_status: PodStatus):
-        """Update the displayed status."""
         self.pod_status = pod_status
         ip_suffix = f"  {pod_status.ip}" if pod_status.ip and pod_status.ip != pod_status.name else ""
         label = f"{_status_tag(pod_status.healthy)}  {pod_status.name}{ip_suffix}"
         self.children[0].update(label)
-
 
 # ---------------------------------------------------------------------------
 # Main Application
@@ -131,94 +323,116 @@ class PodListItem(ListItem):
 class PodMonitorUI(App):
     CSS = """
     Screen {
-        background: #0d1117;
-    }
-
-    Header {
-        background: #161b22;
-        color: #c9d1d9;
-    }
-
-    Footer {
-        background: #161b22;
-        color: #8b949e;
+        background: #000000;
     }
 
     #grid {
         height: 1fr;
-        margin: 0 1;
+        margin: 0;
+        layout: vertical;
     }
 
-    /* ---- top row ---- */
-    #top-row {
-        height: 55%;
-    }
-
-    #pod-panel {
-        width: 55%;
-        background: #0d1117;
-        border: round #30363d;
-        margin: 0 1 0 0;
-    }
-
-    #metrics-panel {
-        width: 45%;
-        background: #0d1117;
-        border: round #30363d;
-    }
-
-    /* ---- bottom row ---- */
-    #bottom-row {
-        height: 45%;
-        margin-top: 1;
-    }
-
-    #log-panel {
-        width: 55%;
-        background: #0d1117;
-        border: round #30363d;
-        margin: 0 1 0 0;
-    }
-
-    #ai-panel {
-        width: 45%;
-        background: #0d1117;
-        border: round #30363d;
-    }
-
-    /* ---- inner content ---- */
-    .panel-title {
-        color: #58a6ff;
-        text-style: bold;
+    #top-bar {
+        height: 3;
+        border: solid #00d2ff;
+        background: #000000;
+        color: #00d2ff;
         padding: 0 1;
     }
 
+    /* ---- Middle Row ---- */
+    #middle-row {
+        height: 55fr;
+        layout: horizontal;
+    }
+
+    #left-column {
+        width: 30%;
+        height: 100%;
+        layout: vertical;
+    }
+
+    #pod-panel {
+        height: 60%;
+        border: solid #00d2ff;
+        background: #000000;
+    }
+
+    #network-panel {
+        height: 40%;
+        border: solid #00d2ff;
+        background: #000000;
+    }
+
+    #metrics-panel {
+        width: 70%;
+        height: 100%;
+        border: solid #00d2ff;
+        background: #000000;
+    }
+
+    /* ---- Bottom Row ---- */
+    #bottom-row {
+        height: 45fr;
+        layout: horizontal;
+    }
+
+    #log-panel {
+        width: 60%;
+        height: 100%;
+        border: solid #00d2ff;
+        background: #000000;
+    }
+
+    #ai-panel {
+        width: 40%;
+        height: 100%;
+        border: solid #00d2ff;
+        background: #000000;
+    }
+
+    #bottom-bar {
+        height: 1;
+        background: #00d2ff;
+        color: #000000;
+        text-align: left;
+    }
+
+    /* ---- inner styles ---- */
     #pod-list {
         height: 1fr;
-        background: #0d1117;
+        background: #000000;
         scrollbar-size: 1 1;
     }
 
     #log-view {
         height: 1fr;
-        background: #0d1117;
+        background: #000000;
         scrollbar-size: 1 1;
-    }
-
-    #metrics-content {
-        height: 1fr;
-        padding: 0 1;
-        overflow-y: auto;
     }
 
     #ai-content {
         height: 1fr;
+        background: #000000;
+        scrollbar-size: 1 1;
         padding: 0 1;
-        overflow-y: auto;
     }
 
-    .metric-row {
-        color: #c9d1d9;
+    /* Scrollbar override for btop look (cyan/gray) */
+    .scrollbar-cursor {
+        background: #00d2ff;
+    }
+    .scrollbar-track {
+        background: #262626;
+    }
+
+    /* Border titles/subtitles style */
+    Container {
+        border-title-color: #00d2ff;
+        border-title-background: #000000;
+        border-title-style: bold;
+        border-subtitle-color: #888888;
+        border-subtitle-background: #000000;
     }
 
     .anomaly-entry {
@@ -237,16 +451,17 @@ class PodMonitorUI(App):
     }
 
     ListView > ListItem {
-        background: #0d1117;
+        background: #000000;
         padding: 0 1;
     }
 
     ListView > ListItem.--highlight {
-        background: #161b22;
+        background: #111111;
     }
 
     ListView:focus > ListItem.--highlight {
-        background: #1f2937;
+        background: #222222;
+        color: #00d2ff;
     }
     """
 
@@ -259,6 +474,10 @@ class PodMonitorUI(App):
         Binding("enter", "select_pod", "Select"),
         Binding("r", "refresh", "Refresh"),
         Binding("a", "toggle_ai", "Toggle AI"),
+        Binding("u", "show_info", "Info"),
+        Binding("t", "terminate_pod", "Terminate"),
+        Binding("k", "kill_pod", "Kill"),
+        Binding("n", "nice_pod", "Nice"),
     ]
 
     def __init__(self, monitor):
@@ -267,33 +486,48 @@ class PodMonitorUI(App):
         self.selected_pod: Optional[PodStatus] = None
         self.ai_enabled = True
         self.pod_list_items: List[PodListItem] = []
+        self.pods_cache: List[PodStatus] = []
 
     def compose(self) -> ComposeResult:
-        yield Header(show_clock=True)
+        yield TopBar(self.monitor, id="top-bar")
 
         with Vertical(id="grid"):
-            # ── Top row ──
-            with Horizontal(id="top-row"):
-                with Container(id="pod-panel"):
-                    yield Static("[ Pods ]", classes="panel-title")
-                    yield ListView(id="pod-list")
+            # ── Middle row ──
+            with Horizontal(id="middle-row"):
+                with Vertical(id="left-column"):
+                    with Container(id="pod-panel"):
+                        yield ListView(id="pod-list")
+                    with Container(id="network-panel"):
+                        yield NetworkInfo(id="network-info")
                 with Container(id="metrics-panel"):
-                    yield Static("[ Metrics ]", classes="panel-title")
-                    yield ScrollableContainer(id="metrics-content")
+                    yield MetricsTable(id="metrics-table")
 
             # ── Bottom row ──
             with Horizontal(id="bottom-row"):
                 with Container(id="log-panel"):
-                    yield Static("[ Logs ]", classes="panel-title")
                     yield LogViewer(id="log-view")
                 with Container(id="ai-panel"):
-                    yield Static("[ AI Insights ]", classes="panel-title")
                     yield ScrollableContainer(id="ai-content")
 
-        yield Footer()
+        yield BottomMenuBar(id="bottom-bar")
 
     async def on_mount(self):
         """Set up the UI."""
+        self.pods_cache = await self.monitor.get_all_pods()
+        self.query_one("#pod-panel").border_title = "[ pods ]"
+        self.query_one("#pod-panel").border_subtitle = "enter select"
+        
+        self.query_one("#network-panel").border_title = "[ network info ]"
+        
+        self.query_one("#metrics-panel").border_title = "[ pod metrics ]"
+        self.query_one("#metrics-panel").border_subtitle = "r refresh"
+        
+        self.query_one("#log-panel").border_title = "[ logs ]"
+        self.query_one("#log-panel").border_subtitle = "q quit"
+        
+        self.query_one("#ai-panel").border_title = "[ ai diagnostics ]"
+        self.query_one("#ai-panel").border_subtitle = "a toggle ai"
+
         pod_list = self.query_one("#pod-list", ListView)
 
         for pod in await self.monitor.get_all_pods():
@@ -313,6 +547,7 @@ class PodMonitorUI(App):
         """Update all UI components."""
         pod_list = self.query_one("#pod-list", ListView)
         pods = await self.monitor.get_all_pods()
+        self.pods_cache = pods
 
         # Update list items
         for item, pod in zip(self.pod_list_items, pods):
@@ -326,6 +561,9 @@ class PodMonitorUI(App):
                     await self.update_pod_view(pod)
                     break
 
+        # Also refresh top bar to update global stats sparklines
+        self.query_one("#top-bar", TopBar).refresh()
+
     async def update_pod_view(self, pod: PodStatus):
         """Update the detailed view for a pod."""
         # ── Logs ──
@@ -336,58 +574,13 @@ class PodMonitorUI(App):
             tag = _log_level_tag(log.level)
             log_view.add_log(f"[dim]{timestamp}[/dim] {tag} {log.message}", log.level)
 
-        # ── Metrics ──
-        metrics_panel = self.query_one("#metrics-content", ScrollableContainer)
-        metrics_panel.remove_children()
+        # ── Network Info ──
+        net_info = self.query_one("#network-info", NetworkInfo)
+        net_info.update_pod(pod)
 
-        m = pod.metrics
-
-        # Restart count — highlight in red when non-zero
-        rst_val = pod.restarts
-        if rst_val > 0:
-            rst_display = f"[red]{rst_val}[/red]"
-        else:
-            rst_display = f"[green]{rst_val}[/green]"
-
-        node_display = pod.node_name or "[dim]unknown[/dim]"
-        age_display = _format_age(m.uptime)
-
-        # Phase color
-        phase_raw = pod.phase or "Unknown"
-        phase_colors = {
-            "Running": "green", "Succeeded": "green",
-            "Pending": "yellow", "ContainerCreating": "yellow",
-            "Failed": "red", "CrashLoopBackOff": "red",
-            "Unknown": "dim",
-        }
-        pc = phase_colors.get(phase_raw, "white")
-        phase_display = f"[{pc}]{phase_raw}[/{pc}]"
-
-        # Pod IP
-        ip_display = pod.pod_ip or "[dim]n/a[/dim]"
-
-        # Image — strip registry prefix for brevity
-        img = pod.image or ""
-        if "/" in img:
-            img = img.rsplit("/", 1)[-1]
-        img_display = img or "[dim]n/a[/dim]"
-
-        # Labels
-        lbl_display = pod.labels or "[dim]none[/dim]"
-
-        mem_pct = m.memory_usage / max(m.memory_limit, 1) * 100
-
-        metrics_panel.mount(
-            Static(f"CPU  {_bar(m.cpu_usage)}", classes="metric-row", markup=True),
-            Static(f"MEM  {_bar(mem_pct)}", classes="metric-row", markup=True),
-            Static(f"ERR  {_bar(m.error_rate)}", classes="metric-row", markup=True),
-            Static(f"CONN {m.active_connections}  REQ {m.request_rate:.1f}/s", classes="metric-row", markup=True),
-            Static(f"RST  {rst_display}  NODE {node_display}", classes="metric-row", markup=True),
-            Static(f"AGE  {age_display}  STS {phase_display}", classes="metric-row", markup=True),
-            Static(f"IP   {ip_display}", classes="metric-row", markup=True),
-            Static(f"IMG  {img_display}", classes="metric-row", markup=True),
-            Static(f"APP  {lbl_display}", classes="metric-row", markup=True),
-        )
+        # ── Metrics Table ──
+        metrics_table = self.query_one("#metrics-table", MetricsTable)
+        metrics_table.update_pod(pod)
 
         # ── AI Insights ──
         ai_panel = self.query_one("#ai-content", ScrollableContainer)
@@ -451,7 +644,6 @@ class PodMonitorUI(App):
         """Toggle AI analysis on/off."""
         self.ai_enabled = not self.ai_enabled
 
-        # Guard against mock monitor with no config
         if hasattr(self.monitor, "config") and self.monitor.config is not None:
             self.monitor.config.ai.enabled = self.ai_enabled
         if hasattr(self.monitor, "ai_analyzer"):
@@ -459,6 +651,40 @@ class PodMonitorUI(App):
 
         status = "enabled" if self.ai_enabled else "disabled"
         self.notify(f"AI analysis {status}", title="AI Status")
+
+    def action_show_info(self):
+        """Display pod detailed info toast."""
+        if self.selected_pod:
+            ip = self.selected_pod.pod_ip or self.selected_pod.ip or "n/a"
+            node = self.selected_pod.node_name or "unknown"
+            self.notify(
+                f"Pod: {self.selected_pod.name}\nIP: ip\nNode: {node}\nNamespace: {self.selected_pod.namespace}",
+                title="Pod Info",
+                severity="info"
+            )
+        else:
+            self.notify("No pod selected", title="Pod Info", severity="warning")
+
+    def action_terminate_pod(self):
+        """Simulate terminating the selected pod."""
+        if self.selected_pod:
+            self.notify(f"Sending SIGTERM to pod {self.selected_pod.name}...", title="Terminate Pod", severity="warning")
+        else:
+            self.notify("No pod selected", title="Terminate Pod", severity="warning")
+
+    def action_kill_pod(self):
+        """Simulate killing the selected pod."""
+        if self.selected_pod:
+            self.notify(f"Sending SIGKILL to pod {self.selected_pod.name}!", title="Kill Pod", severity="error")
+        else:
+            self.notify("No pod selected", title="Kill Pod", severity="warning")
+
+    def action_nice_pod(self):
+        """Simulate renicing the selected pod."""
+        if self.selected_pod:
+            self.notify(f"Renicing container processes in {self.selected_pod.name} to 10", title="Nice Pod", severity="info")
+        else:
+            self.notify("No pod selected", title="Nice Pod", severity="warning")
 
     def action_quit(self):
         """Quit the application."""

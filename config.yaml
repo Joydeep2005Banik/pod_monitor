@@ -32,10 +32,14 @@ monitor:
   # Mode: "kubectl" (local kubectl) or "ssh" (remote via SSH)
   mode: "kubectl"
 
+  # Kubernetes context to use (optional, will use active context if not set)
+  context: "minikube"
+
   # List of pod names to monitor (kubectl mode)
   # For SSH mode, these would be IP addresses instead
   pods:
     - "log-generator"
+    - "my-pod"
 
   # Kubernetes namespaces to check
   namespaces:

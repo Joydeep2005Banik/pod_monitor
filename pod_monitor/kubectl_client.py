@@ -48,9 +48,10 @@ def _find_kubectl() -> Optional[str]:
 class KubectlClient:
     """Fetch pod logs and metrics by shelling out to the local kubectl binary."""
 
-    def __init__(self, pod_name: str, namespace: str = "default"):
+    def __init__(self, pod_name: str, namespace: str = "default", context: Optional[str] = None):
         self.pod_name = pod_name
         self.namespace = namespace
+        self.context = context
         self._kubectl: str = ""  # resolved in connect()
 
     # ------------------------------------------------------------------
@@ -62,10 +63,13 @@ class KubectlClient:
         self._kubectl = _find_kubectl() or "kubectl"
         logger.debug("Using kubectl at: %s", self._kubectl)
 
+        cmd = [self._kubectl, "get", "pod", self.pod_name, "-n", self.namespace, "--no-headers"]
+        if self.context:
+            cmd.extend(["--context", self.context])
+            
         try:
             proc = await asyncio.create_subprocess_exec(
-                self._kubectl, "get", "pod", self.pod_name,
-                "-n", self.namespace, "--no-headers",
+                *cmd,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
@@ -104,6 +108,8 @@ class KubectlClient:
             "-n", namespace,
             f"--tail={tail}",
         ]
+        if self.context:
+            cmd.extend(["--context", self.context])
 
         try:
             proc = await asyncio.create_subprocess_exec(
@@ -151,6 +157,8 @@ class KubectlClient:
             self._kubectl, "top", "pod", pod_name,
             "-n", namespace, "--no-headers",
         ]
+        if self.context:
+            top_cmd.extend(["--context", self.context])
 
         try:
             proc = await asyncio.create_subprocess_exec(
@@ -189,6 +197,8 @@ class KubectlClient:
                   "{.spec.containers[0].image}|"
                   "{.metadata.labels.app}",
         ]
+        if self.context:
+            spec_cmd.extend(["--context", self.context])
 
         try:
             proc = await asyncio.create_subprocess_exec(
