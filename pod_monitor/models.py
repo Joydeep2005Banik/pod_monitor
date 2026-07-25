@@ -47,6 +47,7 @@ class PodMetrics:
     request_rate: float = 0.0
     active_connections: int = 0
     uptime: Optional[float] = None
+    is_cached: bool = False
 
 @dataclass
 class PodStatus:

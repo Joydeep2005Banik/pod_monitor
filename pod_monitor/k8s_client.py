@@ -10,6 +10,31 @@ from .models import LogEntry, LogLevel, PodMetrics
 
 logger = logging.getLogger(__name__)
 
+def parse_k8s_memory(mem_str: str) -> float:
+    """Parse k8s memory string (e.g. '1030Ki', '1.03Mi') and return value in MiB."""
+    if not mem_str:
+        return 0.0
+    mem_str = str(mem_str).strip().strip('"\'')
+    try:
+        if mem_str.endswith("Ki"):
+            return float(mem_str[:-2]) / 1024.0
+        elif mem_str.endswith("Mi"):
+            return float(mem_str[:-2])
+        elif mem_str.endswith("Gi"):
+            return float(mem_str[:-2]) * 1024.0
+        elif mem_str.endswith("Ti"):
+            return float(mem_str[:-2]) * 1024.0 * 1024.0
+        elif mem_str.endswith("m"):
+            return float(mem_str[:-1]) / (1024 * 1024 * 1000)
+        elif mem_str.endswith("K"):
+            return float(mem_str[:-1]) / 1000.0 * (1000 / 1024)
+        else:
+            # Assume raw bytes
+            return float(mem_str) / (1024.0 * 1024.0)
+    except ValueError:
+        return 0.0
+
+
 class KubernetesAPIClient:
     def __init__(self, context: Optional[str] = None):
         self.context = context
@@ -65,8 +90,17 @@ class KubernetesAPIClient:
             
             info["node_name"] = pod.spec.node_name or "unknown"
             info["pod_ip"] = pod.status.pod_ip or "unknown"
-            info["phase"] = pod.status.phase or "Unknown"
+            phase = pod.status.phase or "Unknown"
+            if pod.status.container_statuses:
+                for cs in pod.status.container_statuses:
+                    if cs.state and cs.state.waiting:
+                        phase = cs.state.waiting.reason
+                        break
+                    if cs.state and cs.state.terminated and cs.state.terminated.exit_code != 0:
+                        phase = cs.state.terminated.reason or "Error"
+                        break
             
+            info["phase"] = phase
             if pod.spec.containers and pod.spec.containers[0].image:
                 info["image"] = pod.spec.containers[0].image
             
@@ -87,7 +121,9 @@ class KubernetesAPIClient:
             
         return info
 
-    async def get_pod_metrics(self, pod_name: str, namespace: str = "default") -> PodMetrics:
+
+
+    async def get_pod_metrics(self, pod_name: str, namespace: str = "default", current_metrics: Optional[PodMetrics] = None) -> PodMetrics:
         """Get CPU and memory metrics via Metrics API."""
         metrics = PodMetrics()
         if not self._connected:
@@ -113,15 +149,8 @@ class KubernetesAPIClient:
                 else:
                     metrics.cpu_usage = float(cpu_str)
                     
-                # Parse Memory (Ki, Mi, Gi)
-                if mem_str.endswith("Ki"):
-                    metrics.memory_usage = float(mem_str.replace("Ki", "")) / 1024.0
-                elif mem_str.endswith("Mi"):
-                    metrics.memory_usage = float(mem_str.replace("Mi", ""))
-                elif mem_str.endswith("Gi"):
-                    metrics.memory_usage = float(mem_str.replace("Gi", "")) * 1024.0
-                else:
-                    metrics.memory_usage = float(mem_str) / (1024 * 1024)
+                # Parse Memory
+                metrics.memory_usage = parse_k8s_memory(mem_str)
                     
             # Also try to get limits from the pod spec
             pod = await asyncio.to_thread(self.v1.read_namespaced_pod, pod_name, namespace)
@@ -137,14 +166,24 @@ class KubernetesAPIClient:
                         metrics.cpu_limit = float(cpu_limit) * 100
                         
                 if mem_limit:
-                    if mem_limit.endswith("Mi"):
-                        metrics.memory_limit = float(mem_limit.replace("Mi", ""))
-                    elif mem_limit.endswith("Gi"):
-                        metrics.memory_limit = float(mem_limit.replace("Gi", "")) * 1024.0
+                    metrics.memory_limit = parse_k8s_memory(mem_limit)
+                    
+            if not metrics.memory_limit and pod.spec.node_name:
+                # If NO limit is set, calculate percentage against total node memory capacity
+                node = await asyncio.to_thread(self.v1.read_node, pod.spec.node_name)
+                if node.status.capacity and 'memory' in node.status.capacity:
+                    metrics.memory_limit = parse_k8s_memory(node.status.capacity['memory'])
                         
         except Exception as e:
             # Metrics API might not be installed or pod unavailable, leave metrics empty
-            pass
+            if current_metrics and current_metrics.memory_usage is not None:
+                metrics.memory_usage = current_metrics.memory_usage
+                metrics.memory_limit = current_metrics.memory_limit
+                metrics.cpu_usage = current_metrics.cpu_usage
+                metrics.cpu_limit = current_metrics.cpu_limit
+                metrics.is_cached = True
+            else:
+                metrics.memory_usage = 0.0
             
         return metrics
 

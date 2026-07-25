@@ -34,6 +34,14 @@ def _sparkline(history: List[float], length: int = 12) -> str:
     return "".join(spark)
 
 
+def make_bar(ratio: float, width: int = 12) -> str:
+    """Render a simple visual bar using block characters."""
+    ratio = max(0.0, min(1.0, ratio))
+    filled = int(round(ratio * width))
+    bar_str = "[cyan]" + "█" * filled + "[/cyan]" + "[#333333]" + "░" * (width - filled) + "[/#333333]"
+    return f"{bar_str} {ratio * 100:5.1f}%"
+
+
 def _bar(value: float, width: int = 12) -> str:
     """Render a high-density progress bar with color gradient and density blocks."""
     clamped = max(0.0, min(100.0, value))
@@ -270,7 +278,13 @@ class MetricsTable(Static):
         mem_spark = _sparkline(app.pod_mem_history[pod_name], length=12) if m.memory_usage is not None else "[dim]N/A[/dim]"
         
         cpu_bar = _bar(cpu_val, width=12) if m.cpu_usage is not None else "[red]N/A[/red]"
-        mem_bar = _bar(mem_pct, width=12) if m.memory_usage is not None else "[red]N/A[/red]"
+        
+        if m.memory_usage is not None and m.memory_limit is not None and m.memory_limit > 0:
+            mem_bar = make_bar(mem_val / m.memory_limit, width=12)
+        elif m.memory_usage is not None:
+            mem_bar = make_bar(0.0, width=12) # fallback if no limit
+        else:
+            mem_bar = "[red]N/A[/red]"
         err_bar = _bar(m.error_rate, width=12)
         
         def format_row(label: str, value: str) -> str:
@@ -283,7 +297,11 @@ class MetricsTable(Static):
         else:
             rst_display = f"[red]{rst_val}[/red]" if rst_val > 0 else f"[green]{rst_val}[/green]"
             
-        mem_used_str = f"{mem_val:.2f} MiB" if m.memory_usage is not None else "[dim]N/A[/dim]"
+        if getattr(m, "is_cached", False):
+            mem_used_str = f"{mem_val:.2f} MiB (cached)"
+        else:
+            mem_used_str = f"{mem_val:.2f} MiB" if m.memory_usage is not None else "[dim]N/A[/dim]"
+        
         mem_lim_str = f"{mem_lim:.2f} MiB" if m.memory_limit is not None else "[dim]N/A[/dim]"
         uptime_str = _format_age(m.uptime) if m.uptime is not None else "[dim]N/A[/dim]"
         
@@ -576,8 +594,9 @@ class PodMonitorUI(App):
         # Update selected pod view
         if self.selected_pod:
             for pod in pods:
-                if pod.ip == self.selected_pod.ip:
+                if pod.name == self.selected_pod.name:
                     self.selected_pod = pod
+                    self.monitor.selected_pod_name = pod.name
                     await self.update_pod_view(pod)
                     break
 
@@ -635,7 +654,16 @@ class PodMonitorUI(App):
 
     async def on_list_view_selected(self, event: ListView.Selected):
         """Handle pod selection."""
-        await self.select_pod(event.item)
+        item = event.item
+        if isinstance(item, PodListItem):
+            self.selected_pod = item.pod_status
+            self.monitor.selected_pod_name = self.selected_pod.name
+            
+            # Clear log view immediately on switch
+            log_view = self.query_one("#log-view", LogViewer)
+            log_view.clear()
+            
+            await self.update_pod_view(self.selected_pod)
 
     async def select_pod(self, item):
         """Select a pod and update the view."""

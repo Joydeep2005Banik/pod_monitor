@@ -155,34 +155,41 @@ class PodMonitor:
             try:
                 # Fetch logs (primary: K8s API, fallback: Client)
                 logs = []
-                if self.k8s_api and self.k8s_api._connected:
-                    logs = await self.k8s_api.get_pod_logs(
-                        pod.name,
-                        tail=self.config.monitor.log_lines_to_fetch,
-                        namespace=pod.namespace
-                    )
                 
-                if not logs and client:
-                    logs = await client.get_pod_logs(
-                        pod.name,
-                        tail=self.config.monitor.log_lines_to_fetch,
-                        namespace=pod.namespace
-                    )
+                # Dynamic Background Polling: Only fetch logs if this is the active pod
+                # This saves bandwidth and correctly isolates the log tailing
+                if getattr(self, "selected_pod_name", None) == pod.name:
+                    if self.k8s_api and self.k8s_api._connected:
+                        logs = await self.k8s_api.get_pod_logs(
+                            pod.name,
+                            tail=self.config.monitor.log_lines_to_fetch,
+                            namespace=pod.namespace
+                        )
+                    
+                    if not logs and client:
+                        logs = await client.get_pod_logs(
+                            pod.name,
+                            tail=self.config.monitor.log_lines_to_fetch,
+                            namespace=pod.namespace
+                        )
 
-                # Update pod status
-                pod.logs = logs
-                pod.total_logs += len(logs)
-                pod.last_check = datetime.now()
+                    # Update pod status with new logs
+                    if logs:
+                        pod.logs = logs
+                        pod.total_logs += len(logs)
+                        pod.last_check = datetime.now()
 
-                # Update error count
-                error_logs = [l for l in logs if l.level in (LogLevel.ERROR, LogLevel.CRITICAL)]
-                warning_logs = [l for l in logs if l.level == LogLevel.WARNING]
-                pod.error_count = len(error_logs)
+                        # Update error count
+                        error_logs = [l for l in logs if l.level in (LogLevel.ERROR, LogLevel.CRITICAL)]
+                        warning_logs = [l for l in logs if l.level == LogLevel.WARNING]
+                        pod.error_count = len(error_logs)
 
                 # Get metrics
                 if self.k8s_api and self.k8s_api._connected:
                     status_info = await self.k8s_api.get_pod_status(pod.name, pod.namespace)
-                    metrics_info = await self.k8s_api.get_pod_metrics(pod.name, pod.namespace)
+                    metrics_info = await self.k8s_api.get_pod_metrics(
+                        pod.name, pod.namespace, current_metrics=pod.metrics
+                    )
                     
                     pod.metrics = metrics_info
                     pod.restarts = status_info["restarts"]
@@ -244,7 +251,7 @@ class PodMonitor:
                 pod.anomalies = anomalies
 
                 # Check if pod is healthy
-                pod.healthy = pod.error_count < self.config.monitor.anomaly_threshold and len(anomalies) == 0
+                pod.healthy = pod.error_count < self.config.monitor.anomaly_threshold and len(anomalies) == 0 and pod.phase in ("Running", "Succeeded")
 
                 # Trigger UI update
                 if self.ui_callback:
