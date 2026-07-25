@@ -58,6 +58,27 @@ class KubectlClient:
     # Connection lifecycle
     # ------------------------------------------------------------------
 
+    @classmethod
+    async def get_all_pods_in_namespace(cls, namespace: str, context: Optional[str] = None) -> List[str]:
+        """Discover all pods in a namespace."""
+        kubectl = _find_kubectl() or "kubectl"
+        cmd = [kubectl, "get", "pods", "-n", namespace, "--no-headers", "-o", "custom-columns=:metadata.name"]
+        if context:
+            cmd.extend(["--context", context])
+            
+        try:
+            proc = await asyncio.create_subprocess_exec(
+                *cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+            stdout, stderr = await proc.communicate()
+            if proc.returncode == 0:
+                return [p for p in stdout.decode().strip().split('\n') if p]
+        except Exception as e:
+            logger.error(f"Failed to discover pods: {e}")
+        return []
+
     async def connect(self) -> bool:
         """Verify that kubectl is reachable and the pod exists."""
         self._kubectl = _find_kubectl() or "kubectl"
@@ -305,10 +326,12 @@ class KubectlClient:
 
         # Extract timestamp
         timestamp = datetime.now()
-        time_match = re.search(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}", line)
+        time_match = re.search(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?", line)
         if time_match:
             try:
-                timestamp = datetime.fromisoformat(time_match.group())
+                ts_str = time_match.group()
+                ts_str = re.sub(r"(\.\d{6})\d+", r"\1", ts_str)
+                timestamp = datetime.fromisoformat(ts_str)
             except Exception:
                 pass
 

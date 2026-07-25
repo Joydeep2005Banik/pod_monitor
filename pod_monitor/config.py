@@ -16,6 +16,7 @@ load_dotenv()
 @dataclass
 class SSHConfig:
     """SSH connection configuration."""
+    host: Optional[str] = None
     user: str = "root"
     password: Optional[str] = None
     key_path: Optional[str] = None
@@ -25,6 +26,7 @@ class SSHConfig:
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "SSHConfig":
         return cls(
+            host=data.get('host'),
             user=data.get('user', 'root'),
             password=data.get('password'),
             key_path=data.get('key_path'),
@@ -111,8 +113,7 @@ class Config:
     
     def validate(self) -> bool:
         """Validate configuration."""
-        if not self.monitor.pods:
-            raise ValueError("At least one pod must be specified")
+        # Empty pods list now implies auto-discovery
         
         if self.ai.provider == "openai" and not self.ai.openai_token:
             raise ValueError("OpenAI token required for OpenAI provider")
@@ -184,6 +185,7 @@ def create_default_config(path: str = "config.yaml"):
     """Create a default configuration file."""
     default_config = {
         'ssh': {
+            'host': None,
             'user': 'root',
             'password': '',
             'key_path': '~/.ssh/id_rsa',

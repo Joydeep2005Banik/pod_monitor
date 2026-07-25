@@ -2,7 +2,7 @@ import asyncio
 import re
 import random
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 
 from textual.app import App, ComposeResult
 from textual.containers import Container, Horizontal, Vertical, ScrollableContainer
@@ -545,6 +545,8 @@ class PodMonitorUI(App):
 
     async def update_ui(self):
         """Update all UI components."""
+        # Force a full screen refresh to clear any text artifacts
+        self.refresh()
         pod_list = self.query_one("#pod-list", ListView)
         pods = await self.monitor.get_all_pods()
         self.pods_cache = pods
@@ -569,8 +571,13 @@ class PodMonitorUI(App):
         # ── Logs ──
         log_view = self.query_one("#log-view", LogViewer)
         log_view.clear()
+        # IST Timezone (UTC +5:30)
+        IST = timezone(timedelta(hours=5, minutes=30))
         for log in pod.logs[-50:]:
-            timestamp = log.timestamp.strftime("%H:%M:%S")
+            log_time = log.timestamp
+            if log_time.tzinfo is not None:
+                log_time = log_time.astimezone(IST)
+            timestamp = log_time.strftime("%H:%M:%S")
             tag = _log_level_tag(log.level)
             log_view.add_log(f"[dim]{timestamp}[/dim] {tag} {log.message}", log.level)
 

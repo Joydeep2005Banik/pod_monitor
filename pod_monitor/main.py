@@ -18,10 +18,10 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler('pod_monitor.log'),
-        logging.StreamHandler()
+        logging.FileHandler('pod_monitor.log')
     ]
 )
+logging.getLogger('asyncssh').setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 async def ui_callback(pod: PodStatus):

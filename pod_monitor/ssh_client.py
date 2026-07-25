@@ -52,8 +52,12 @@ class SSHClient:
         if not self.connection:
             raise ConnectionError("Not connected to pod")
         
-        result = await self.connection.run(command, check=True)
-        return result.stdout
+        try:
+            result = await self.connection.run(command, check=True)
+            return str(result.stdout)
+        except asyncssh.ProcessError as e:
+            logger.warning(f"SSH command failed ({e.exit_status}): {command}")
+            raise RuntimeError(f"Command failed: {command}") from e
 
     async def get_pod_logs(self, pod_name: str, tail: int = 100, 
                           namespace: str = "default") -> List[LogEntry]:
@@ -65,6 +69,16 @@ class SSHClient:
             return self.parse_logs(output, pod_name)
         except Exception as e:
             logger.error(f"Error fetching logs from {self.host}: {e}")
+            return []
+
+    async def get_all_pods_in_namespace(self, namespace: str) -> List[str]:
+        """Discover all pods in a namespace via SSH."""
+        cmd = f"kubectl get pods -n {namespace} --no-headers -o custom-columns=:metadata.name"
+        try:
+            output = await self.execute_command(cmd)
+            return [p for p in output.strip().split('\n') if p]
+        except Exception as e:
+            logger.error(f"Failed to discover pods via SSH: {e}")
             return []
 
     async def get_pod_metrics(self, pod_name: str, namespace: str = "default") -> PodMetrics:
@@ -146,10 +160,12 @@ class SSHClient:
 
         # Try to extract timestamp
         timestamp = datetime.now()
-        time_match = re.search(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}', line)
+        time_match = re.search(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?", line)
         if time_match:
             try:
-                timestamp = datetime.fromisoformat(time_match.group())
+                ts_str = time_match.group()
+                ts_str = re.sub(r"(\.\d{6})\d+", r"\1", ts_str)
+                timestamp = datetime.fromisoformat(ts_str)
             except Exception:
                 pass
 
@@ -171,6 +187,7 @@ class SSHClient:
         if self.connection:
             self.connection.close()
             await self.connection.wait_closed()
+            self.connection = None
 
     async def __aenter__(self):
         await self.connect()

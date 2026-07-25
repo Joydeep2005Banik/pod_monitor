@@ -3,9 +3,10 @@
 
 # SSH Connection Settings (only used when monitor.mode = "ssh")
 ssh:
-  user: "root"
+  host: "192.168.49.2"
+  user: "docker"
   password: ""  # Or use key_path
-  key_path: "~/.ssh/id_rsa"
+  key_path: "~/.minikube/machines/minikube/id_rsa"
   port: 22
   timeout: 30
 
@@ -30,7 +31,7 @@ ai:
 # Pod Monitoring Settings
 monitor:
   # Mode: "kubectl" (local kubectl) or "ssh" (remote via SSH)
-  mode: "kubectl"
+  mode: "ssh"
 
   # Kubernetes context to use (optional, will use active context if not set)
   context: "minikube"
@@ -38,8 +39,7 @@ monitor:
   # List of pod names to monitor (kubectl mode)
   # For SSH mode, these would be IP addresses instead
   pods:
-    - "log-generator"
-    - "my-pod"
+    - "*"
 
   # Kubernetes namespaces to check
   namespaces:

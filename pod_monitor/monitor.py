@@ -34,15 +34,41 @@ class PodMonitor:
         """Start monitoring all pods."""
         self.running = True
 
+        namespace = self.config.monitor.namespaces[0] if self.config.monitor.namespaces else "default"
+        pods_to_monitor = self.config.monitor.pods
+
         if self._use_kubectl:
-            # In kubectl mode, pod entries are pod names
-            for pod_name in self.config.monitor.pods:
-                namespace = self.config.monitor.namespaces[0] if self.config.monitor.namespaces else "default"
+            if not pods_to_monitor or "*" in pods_to_monitor:
+                pods_to_monitor = await KubectlClient.get_all_pods_in_namespace(namespace, self.config.monitor.context)
+                logger.info(f"Discovered {len(pods_to_monitor)} pods in namespace {namespace}")
+                
+            for pod_name in pods_to_monitor:
                 await self._connect_pod_kubectl(pod_name, namespace)
         else:
-            # Legacy SSH mode — pod entries are IP addresses
-            for ip in self.config.monitor.pods:
-                await self._connect_pod_ssh(ip)
+            # SSH mode — pod entries are pod names, we use ssh.host
+            ssh_host = self.config.ssh.host
+            if not ssh_host:
+                logger.error("SSH mode enabled but no ssh.host provided in config")
+                return
+
+            if not pods_to_monitor or "*" in pods_to_monitor:
+                temp_client = SSHClient(
+                    host=ssh_host,
+                    username=self.config.ssh.user,
+                    password=self.config.ssh.password,
+                    key_path=self.config.ssh.key_path,
+                    port=self.config.ssh.port
+                )
+                if await temp_client.connect():
+                    pods_to_monitor = await temp_client.get_all_pods_in_namespace(namespace)
+                    await temp_client.close()
+                    logger.info(f"Discovered {len(pods_to_monitor)} pods in namespace {namespace} via SSH")
+                else:
+                    logger.error("Failed to connect to SSH host for pod discovery")
+                    pods_to_monitor = []
+
+            for pod_name in pods_to_monitor:
+                await self._connect_pod_ssh(ssh_host, pod_name, namespace)
 
         # Start monitoring tasks
         for key in self.pods:
@@ -76,29 +102,31 @@ class PodMonitor:
             logger.error(f"kubectl: pod {namespace}/{pod_name} not found or not ready")
             return False
 
-    async def _connect_pod_ssh(self, ip: str) -> bool:
-        """Establish SSH connection to a pod (legacy mode)."""
-        client = SSHClient(
-            host=ip,
-            username=self.config.ssh.user,
-            password=self.config.ssh.password,
-            key_path=self.config.ssh.key_path,
-            port=self.config.ssh.port
-        )
-
-        connected = await client.connect()
-        if connected:
-            self.clients[ip] = client
-            self.pods[ip] = PodStatus(
-                ip=ip,
-                name=f"pod-{ip.replace('.', '-')}",
-                namespace="default"
+    async def _connect_pod_ssh(self, host: str, pod_name: str, namespace: str) -> bool:
+        """Establish SSH connection to a node and monitor a pod."""
+        client = self.clients.get(host)
+        if not client:
+            client = SSHClient(
+                host=host,
+                username=self.config.ssh.user,
+                password=self.config.ssh.password,
+                key_path=self.config.ssh.key_path,
+                port=self.config.ssh.port
             )
-            logger.info(f"Connected to pod {ip}")
-            return True
-        else:
-            logger.error(f"Failed to connect to pod {ip}")
-            return False
+            connected = await client.connect()
+            if not connected:
+                logger.error(f"Failed to connect to host {host}")
+                return False
+            self.clients[host] = client
+
+        self.pods[pod_name] = PodStatus(
+            ip=host,
+            name=pod_name,
+            namespace=namespace
+        )
+        self.clients[pod_name] = client
+        logger.info(f"SSH: monitoring pod {namespace}/{pod_name} via {host}")
+        return True
 
     # ------------------------------------------------------------------
     # Monitoring loop
@@ -214,8 +242,8 @@ class PodMonitor:
         for task in self._tasks:
             task.cancel()
 
-        # Close clients
-        for client in self.clients.values():
+        # Close clients (unique to prevent double closing)
+        for client in set(self.clients.values()):
             await client.close()
 
         logger.info("Monitoring stopped")
