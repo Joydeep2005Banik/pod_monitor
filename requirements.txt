@@ -19,3 +19,4 @@ rich==15.0.0
 textual==8.2.8
 typing_extensions==4.16.0
 uc-micro-py==2.0.0
+kubernetes>=28.1.0

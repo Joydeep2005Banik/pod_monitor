@@ -39,14 +39,14 @@ class Anomaly:
 
 @dataclass
 class PodMetrics:
-    cpu_usage: float = 0.0
-    memory_usage: float = 0.0
-    memory_limit: float = 100.0
-    cpu_limit: float = 100.0
+    cpu_usage: Optional[float] = None
+    memory_usage: Optional[float] = None
+    memory_limit: Optional[float] = None
+    cpu_limit: Optional[float] = None
     error_rate: float = 0.0
     request_rate: float = 0.0
     active_connections: int = 0
-    uptime: float = 0.0
+    uptime: Optional[float] = None
 
 @dataclass
 class PodStatus:
@@ -60,12 +60,14 @@ class PodStatus:
     metrics: PodMetrics = field(default_factory=PodMetrics)
     error_count: int = 0
     total_logs: int = 0
-    restarts: int = 0
+    restarts: Optional[int] = None
     node_name: str = ""
     pod_ip: str = ""
     phase: str = ""
     image: str = ""
     labels: str = ""
+    error_message: Optional[str] = None
+    status_reason: Optional[str] = None
 
 @dataclass
 class Config:

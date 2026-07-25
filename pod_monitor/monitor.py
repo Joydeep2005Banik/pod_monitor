@@ -7,8 +7,8 @@ import uuid
 from .models import PodStatus, LogEntry, Anomaly, Severity, LogLevel
 from .config import Config
 from .ssh_client import SSHClient
-from .kubectl_client import KubectlClient
 from .ai_analyzer import AIAnalyzer
+from .k8s_client import KubernetesAPIClient
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +25,7 @@ class PodMonitor:
         self.ui_callback = ui_callback
         self.running = False
         self._tasks: List[asyncio.Task] = []
+        self.k8s_api: Optional[KubernetesAPIClient] = None
 
     @property
     def _use_kubectl(self) -> bool:
@@ -37,10 +38,19 @@ class PodMonitor:
         namespace = self.config.monitor.namespaces[0] if self.config.monitor.namespaces else "default"
         pods_to_monitor = self.config.monitor.pods
 
+        # Setup K8s API Client
+        self.k8s_api = KubernetesAPIClient(self.config.monitor.context)
+        api_connected = await self.k8s_api.connect()
+
+        if api_connected and (not pods_to_monitor or "*" in pods_to_monitor):
+            pods_to_monitor = await self.k8s_api.get_all_pods_in_namespace(namespace)
+            logger.info(f"Discovered {len(pods_to_monitor)} pods in namespace {namespace} via K8s API")
+
         if self._use_kubectl:
+            from .kubectl_client import KubectlClient
             if not pods_to_monitor or "*" in pods_to_monitor:
                 pods_to_monitor = await KubectlClient.get_all_pods_in_namespace(namespace, self.config.monitor.context)
-                logger.info(f"Discovered {len(pods_to_monitor)} pods in namespace {namespace}")
+                logger.info(f"Discovered {len(pods_to_monitor)} pods in namespace {namespace} via kubectl")
                 
             for pod_name in pods_to_monitor:
                 await self._connect_pod_kubectl(pod_name, namespace)
@@ -83,6 +93,7 @@ class PodMonitor:
 
     async def _connect_pod_kubectl(self, pod_name: str, namespace: str) -> bool:
         """Set up a local kubectl client for a pod."""
+        from .kubectl_client import KubectlClient
         client = KubectlClient(
             pod_name=pod_name, 
             namespace=namespace, 
@@ -142,12 +153,21 @@ class PodMonitor:
 
         while self.running:
             try:
-                # Fetch logs
-                logs = await client.get_pod_logs(
-                    pod.name,
-                    tail=self.config.monitor.log_lines_to_fetch,
-                    namespace=pod.namespace
-                )
+                # Fetch logs (primary: K8s API, fallback: Client)
+                logs = []
+                if self.k8s_api and self.k8s_api._connected:
+                    logs = await self.k8s_api.get_pod_logs(
+                        pod.name,
+                        tail=self.config.monitor.log_lines_to_fetch,
+                        namespace=pod.namespace
+                    )
+                
+                if not logs and client:
+                    logs = await client.get_pod_logs(
+                        pod.name,
+                        tail=self.config.monitor.log_lines_to_fetch,
+                        namespace=pod.namespace
+                    )
 
                 # Update pod status
                 pod.logs = logs
@@ -159,22 +179,37 @@ class PodMonitor:
                 warning_logs = [l for l in logs if l.level == LogLevel.WARNING]
                 pod.error_count = len(error_logs)
 
-                # Get metrics from kubectl top (may be empty without metrics-server)
-                if len(logs) > 0:
-                    result = await client.get_pod_metrics(pod.name, pod.namespace)
-                    # KubectlClient returns a dict; SSHClient returns PodMetrics.
-                    if isinstance(result, dict):
-                        pod.metrics = result["metrics"]
-                        pod.restarts = result["restarts"]
-                        pod.node_name = result["node_name"]
-                        pod.pod_ip = result.get("pod_ip", "")
-                        pod.phase = result.get("phase", "")
-                        pod.image = result.get("image", "")
-                        pod.labels = result.get("labels", "")
-                    elif isinstance(result, tuple):
-                        pod.metrics, pod.restarts, pod.node_name = result
-                    else:
-                        pod.metrics = result
+                # Get metrics
+                if self.k8s_api and self.k8s_api._connected:
+                    status_info = await self.k8s_api.get_pod_status(pod.name, pod.namespace)
+                    metrics_info = await self.k8s_api.get_pod_metrics(pod.name, pod.namespace)
+                    
+                    pod.metrics = metrics_info
+                    pod.restarts = status_info["restarts"]
+                    pod.node_name = status_info["node_name"]
+                    pod.pod_ip = status_info["pod_ip"]
+                    pod.phase = status_info["phase"]
+                    pod.image = status_info["image"]
+                    pod.labels = status_info["labels"]
+                    pod.error_message = status_info["error_message"]
+                    
+                    if pod.metrics.uptime is None:
+                        pod.metrics.uptime = status_info["uptime"]
+                else:
+                    if len(logs) > 0 and client:
+                        result = await client.get_pod_metrics(pod.name, pod.namespace)
+                        if isinstance(result, dict):
+                            pod.metrics = result["metrics"]
+                            pod.restarts = result["restarts"]
+                            pod.node_name = result["node_name"]
+                            pod.pod_ip = result.get("pod_ip", "")
+                            pod.phase = result.get("phase", "")
+                            pod.image = result.get("image", "")
+                            pod.labels = result.get("labels", "")
+                        elif isinstance(result, tuple):
+                            pod.metrics, pod.restarts, pod.node_name = result
+                        else:
+                            pod.metrics = result
 
                 # ── Compute log-derived metrics ──
                 total = len(logs)

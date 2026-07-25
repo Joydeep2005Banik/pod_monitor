@@ -102,6 +102,8 @@ def _log_level_tag(level: LogLevel) -> str:
 
 def _format_age(seconds: float) -> str:
     """Format an uptime/age value into a compact human-readable string."""
+    if seconds is None:
+        return "--"
     if seconds <= 0:
         return "--"
     days, rem = divmod(int(seconds), 86400)
@@ -142,8 +144,11 @@ class TopBar(Static):
         # Aggregate CPU / Memory across all active pods
         pods = getattr(self.app, "pods_cache", [])
         if pods:
-            avg_cpu = sum(p.metrics.cpu_usage for p in pods) / len(pods)
-            avg_mem = sum(p.metrics.memory_usage / max(p.metrics.memory_limit, 1) * 100 for p in pods) / len(pods)
+            cpu_usages = [p.metrics.cpu_usage for p in pods if p.metrics.cpu_usage is not None]
+            avg_cpu = sum(cpu_usages) / len(cpu_usages) if cpu_usages else 0.0
+            
+            mem_pcts = [(p.metrics.memory_usage / max(p.metrics.memory_limit or 100.0, 1)) * 100 for p in pods if p.metrics.memory_usage is not None]
+            avg_mem = sum(mem_pcts) / len(mem_pcts) if mem_pcts else 0.0
         else:
             avg_cpu = 0.0
             avg_mem = 0.0
@@ -222,6 +227,8 @@ class NetworkInfo(Static):
             f" [dim]Namespace:[/dim] [magenta]{ns}[/magenta]\n"
             f" [dim]Status:   [/dim] {status_tag} ({phase})"
         )
+        if pod.error_message:
+            content += f"\n [dim]API Error:[/dim] [red]{pod.error_message}[/red]"
         self.update(content)
 
 
@@ -238,7 +245,11 @@ class MetricsTable(Static):
             return
         
         m = pod.metrics
-        mem_pct = (m.memory_usage / max(m.memory_limit, 1)) * 100
+        cpu_val = m.cpu_usage if m.cpu_usage is not None else 0.0
+        mem_val = m.memory_usage if m.memory_usage is not None else 0.0
+        mem_lim = m.memory_limit if m.memory_limit is not None else 100.0
+        
+        mem_pct = (mem_val / max(mem_lim, 1)) * 100
         
         app = self.app
         pod_name = pod.name
@@ -250,16 +261,16 @@ class MetricsTable(Static):
             app.pod_cpu_history[pod_name] = []
             app.pod_mem_history[pod_name] = []
             
-        app.pod_cpu_history[pod_name].append(m.cpu_usage)
+        app.pod_cpu_history[pod_name].append(cpu_val)
         app.pod_mem_history[pod_name].append(mem_pct)
         app.pod_cpu_history[pod_name] = app.pod_cpu_history[pod_name][-20:]
         app.pod_mem_history[pod_name] = app.pod_mem_history[pod_name][-20:]
         
-        cpu_spark = _sparkline(app.pod_cpu_history[pod_name], length=12)
-        mem_spark = _sparkline(app.pod_mem_history[pod_name], length=12)
+        cpu_spark = _sparkline(app.pod_cpu_history[pod_name], length=12) if m.cpu_usage is not None else "[dim]N/A[/dim]"
+        mem_spark = _sparkline(app.pod_mem_history[pod_name], length=12) if m.memory_usage is not None else "[dim]N/A[/dim]"
         
-        cpu_bar = _bar(m.cpu_usage, width=12)
-        mem_bar = _bar(mem_pct, width=12)
+        cpu_bar = _bar(cpu_val, width=12) if m.cpu_usage is not None else "[red]N/A[/red]"
+        mem_bar = _bar(mem_pct, width=12) if m.memory_usage is not None else "[red]N/A[/red]"
         err_bar = _bar(m.error_rate, width=12)
         
         def format_row(label: str, value: str) -> str:
@@ -267,15 +278,22 @@ class MetricsTable(Static):
             return f"{key_str} [bold]{value}[/bold]"
         
         rst_val = pod.restarts
-        rst_display = f"[red]{rst_val}[/red]" if rst_val > 0 else f"[green]{rst_val}[/green]"
+        if rst_val is None:
+            rst_display = "[dim]N/A[/dim]"
+        else:
+            rst_display = f"[red]{rst_val}[/red]" if rst_val > 0 else f"[green]{rst_val}[/green]"
+            
+        mem_used_str = f"{mem_val:.2f} MiB" if m.memory_usage is not None else "[dim]N/A[/dim]"
+        mem_lim_str = f"{mem_lim:.2f} MiB" if m.memory_limit is not None else "[dim]N/A[/dim]"
+        uptime_str = _format_age(m.uptime) if m.uptime is not None else "[dim]N/A[/dim]"
         
         rows = [
             "",
             format_row("CPU Usage", cpu_bar),
             format_row("CPU Sparkline", cpu_spark),
             "",
-            format_row("Memory Used", f"{m.memory_usage:.2f} MiB"),
-            format_row("Memory Limit", f"{m.memory_limit:.2f} MiB"),
+            format_row("Memory Used", mem_used_str),
+            format_row("Memory Limit", mem_lim_str),
             format_row("Memory Graph", mem_bar),
             format_row("Memory Sparkline", mem_spark),
             "",
@@ -284,7 +302,7 @@ class MetricsTable(Static):
             "",
             format_row("Active Conn", f"{m.active_connections}"),
             format_row("Request Rate", f"{m.request_rate:.1f} req/s"),
-            format_row("Uptime / Age", _format_age(m.uptime)),
+            format_row("Uptime / Age", uptime_str),
         ]
         
         self.update("\n".join(rows))
