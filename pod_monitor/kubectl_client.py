@@ -288,9 +288,28 @@ class KubectlClient:
     def parse_logs(self, output: str, pod_name: str) -> List[LogEntry]:
         """Parse raw log output into structured LogEntry objects."""
         logs: List[LogEntry] = []
-        for line in output.strip().split("\n"):
-            if line.strip():
+        if isinstance(output, bytes):
+            output = output.decode('utf-8', errors='replace')
+            
+        for line in output.splitlines():
+            line = line.strip()
+            if not line:
+                continue
+                
+            # Strip literal b'...' wrapping if leaked from pod logger
+            if line.startswith("b'") and line.endswith("'"):
+                line = line[2:-1]
+            elif line.startswith('b"') and line.endswith('"'):
+                line = line[2:-1]
+                
+            # Handle unescaped literal '\n'
+            if "\\n" in line:
+                for subline in line.split("\\n"):
+                    if subline.strip():
+                        logs.append(self.parse_log_line(subline.strip(), pod_name))
+            else:
                 logs.append(self.parse_log_line(line, pod_name))
+                
         return logs
 
     # Regex that matches a leading ISO-ish timestamp (with optional fractional
@@ -300,13 +319,15 @@ class KubectlClient:
     #   2026-07-23T13:18:10.640Z            WARNING: …
     #   2026-07-23T13:18:10.640+05:30       ERROR …
     _TS_PREFIX_RE = re.compile(
-        r"^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}"  # date+time
+        r"^(?:b['\"])?"                               # handle optional b' prefix
+        r"\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}"  # date+time
         r"(?:[.,]\d+)?"                               # fractional seconds
         r"(?:Z|[+-]\d{2}:\d{2})?"                     # timezone
+        r"['\"]?"                                     # optional trailing quote
         r"\s*"
     )
     _LEVEL_PREFIX_RE = re.compile(
-        r"^(?:CRITICAL|ERROR|WARN(?:ING)?|INFO|DEBUG)\s*:?\s*",
+        r"^(?:CRITICAL|CRIT|ERROR|ERR|WARN(?:ING)?|INFO|DEBUG)\s*:?\s*",
         re.IGNORECASE,
     )
 
@@ -315,9 +336,9 @@ class KubectlClient:
         # Detect level
         level = LogLevel.INFO
         upper = line.upper()
-        if "CRITICAL" in upper:
+        if "CRITICAL" in upper or "CRIT" in upper:
             level = LogLevel.CRITICAL
-        elif "ERROR" in upper:
+        elif "ERROR" in upper or "ERR" in upper:
             level = LogLevel.ERROR
         elif "WARN" in upper:
             level = LogLevel.WARNING
@@ -326,10 +347,10 @@ class KubectlClient:
 
         # Extract timestamp
         timestamp = datetime.now()
-        time_match = re.search(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?", line)
+        time_match = re.search(r"\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?", line)
         if time_match:
             try:
-                ts_str = time_match.group()
+                ts_str = time_match.group().replace(" ", "T")
                 ts_str = re.sub(r"(\.\d{6})\d+", r"\1", ts_str)
                 timestamp = datetime.fromisoformat(ts_str)
             except Exception:
@@ -338,7 +359,9 @@ class KubectlClient:
         # Strip leading timestamp + level prefix so the UI doesn't show
         # them twice (they are already rendered from the structured fields).
         message = self._TS_PREFIX_RE.sub("", line)
-        message = self._LEVEL_PREFIX_RE.sub("", message).strip() or line
+        message = self._LEVEL_PREFIX_RE.sub("", message).strip()
+        if not message:
+            message = line
 
         return LogEntry(
             timestamp=timestamp,

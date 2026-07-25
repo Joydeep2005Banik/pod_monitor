@@ -12774,3 +12774,71 @@ Unable to connect to the server: dial tcp 192.168.49.2:8443: i/o timeout
 2026-07-25 22:49:08,419 - pod_monitor.monitor - INFO - SSH: monitoring pod default/test-one-85d78b6db-gsfr4 via 192.168.49.2
 2026-07-25 22:49:08,419 - pod_monitor.monitor - INFO - SSH: monitoring pod default/test-one-85d78b6db-prbcd via 192.168.49.2
 2026-07-25 22:49:08,419 - pod_monitor.monitor - INFO - Monitoring 6 pods (mode=ssh)
+2026-07-25 22:56:10,374 - pod_monitor.main - INFO - Starting Pod Monitor with 1 pods (mode=ssh)
+2026-07-25 22:56:10,374 - pod_monitor.main - INFO - AI Analysis: Enabled
+2026-07-25 22:56:10,374 - pod_monitor.main - INFO - AI Provider: mock
+2026-07-25 22:56:10,398 - pod_monitor.k8s_client - INFO - Connected to Kubernetes API via local kubeconfig.
+2026-07-25 22:56:10,407 - pod_monitor.monitor - INFO - Discovered 6 pods in namespace default via K8s API
+2026-07-25 22:56:10,509 - pod_monitor.ssh_client - INFO - Connected to 192.168.49.2
+2026-07-25 22:56:10,509 - pod_monitor.monitor - INFO - SSH: monitoring pod default/log-generator via 192.168.49.2
+2026-07-25 22:56:10,509 - pod_monitor.monitor - INFO - SSH: monitoring pod default/my-pod via 192.168.49.2
+2026-07-25 22:56:10,509 - pod_monitor.monitor - INFO - SSH: monitoring pod default/pod-two via 192.168.49.2
+2026-07-25 22:56:10,509 - pod_monitor.monitor - INFO - SSH: monitoring pod default/test-one-85d78b6db-fkmzs via 192.168.49.2
+2026-07-25 22:56:10,509 - pod_monitor.monitor - INFO - SSH: monitoring pod default/test-one-85d78b6db-gsfr4 via 192.168.49.2
+2026-07-25 22:56:10,509 - pod_monitor.monitor - INFO - SSH: monitoring pod default/test-one-85d78b6db-prbcd via 192.168.49.2
+2026-07-25 22:56:10,510 - pod_monitor.monitor - INFO - Monitoring 6 pods (mode=ssh)
+2026-07-25 22:58:14,960 - pod_monitor.main - INFO - Starting Pod Monitor with 1 pods (mode=ssh)
+2026-07-25 22:58:14,960 - pod_monitor.main - INFO - AI Analysis: Enabled
+2026-07-25 22:58:14,960 - pod_monitor.main - INFO - AI Provider: mock
+2026-07-25 22:58:14,982 - pod_monitor.k8s_client - INFO - Connected to Kubernetes API via local kubeconfig.
+2026-07-25 22:58:14,990 - pod_monitor.monitor - INFO - Discovered 6 pods in namespace default via K8s API
+2026-07-25 22:58:15,077 - pod_monitor.ssh_client - INFO - Connected to 192.168.49.2
+2026-07-25 22:58:15,077 - pod_monitor.monitor - INFO - SSH: monitoring pod default/log-generator via 192.168.49.2
+2026-07-25 22:58:15,077 - pod_monitor.monitor - INFO - SSH: monitoring pod default/my-pod via 192.168.49.2
+2026-07-25 22:58:15,077 - pod_monitor.monitor - INFO - SSH: monitoring pod default/pod-two via 192.168.49.2
+2026-07-25 22:58:15,077 - pod_monitor.monitor - INFO - SSH: monitoring pod default/test-one-85d78b6db-fkmzs via 192.168.49.2
+2026-07-25 22:58:15,078 - pod_monitor.monitor - INFO - SSH: monitoring pod default/test-one-85d78b6db-gsfr4 via 192.168.49.2
+2026-07-25 22:58:15,078 - pod_monitor.monitor - INFO - SSH: monitoring pod default/test-one-85d78b6db-prbcd via 192.168.49.2
+2026-07-25 22:58:15,078 - pod_monitor.monitor - INFO - Monitoring 6 pods (mode=ssh)
+2026-07-25 23:01:50,403 - pod_monitor.main - INFO - Starting Pod Monitor with 1 pods (mode=ssh)
+2026-07-25 23:01:50,404 - pod_monitor.main - INFO - AI Analysis: Enabled
+2026-07-25 23:01:50,404 - pod_monitor.main - INFO - AI Provider: mock
+2026-07-25 23:01:50,425 - pod_monitor.k8s_client - INFO - Connected to Kubernetes API via local kubeconfig.
+2026-07-25 23:01:50,433 - pod_monitor.monitor - INFO - Discovered 7 pods in namespace default via K8s API
+2026-07-25 23:01:50,532 - pod_monitor.ssh_client - INFO - Connected to 192.168.49.2
+2026-07-25 23:01:50,532 - pod_monitor.monitor - INFO - SSH: monitoring pod default/log-generator via 192.168.49.2
+2026-07-25 23:01:50,532 - pod_monitor.monitor - INFO - SSH: monitoring pod default/my-pod via 192.168.49.2
+2026-07-25 23:01:50,532 - pod_monitor.monitor - INFO - SSH: monitoring pod default/pod-two via 192.168.49.2
+2026-07-25 23:01:50,532 - pod_monitor.monitor - INFO - SSH: monitoring pod default/stress-test via 192.168.49.2
+2026-07-25 23:01:50,532 - pod_monitor.monitor - INFO - SSH: monitoring pod default/test-one-85d78b6db-fkmzs via 192.168.49.2
+2026-07-25 23:01:50,533 - pod_monitor.monitor - INFO - SSH: monitoring pod default/test-one-85d78b6db-gsfr4 via 192.168.49.2
+2026-07-25 23:01:50,533 - pod_monitor.monitor - INFO - SSH: monitoring pod default/test-one-85d78b6db-prbcd via 192.168.49.2
+2026-07-25 23:01:50,533 - pod_monitor.monitor - INFO - Monitoring 7 pods (mode=ssh)
+2026-07-25 23:02:29,929 - pod_monitor.main - INFO - Starting Pod Monitor with 1 pods (mode=ssh)
+2026-07-25 23:02:29,930 - pod_monitor.main - INFO - AI Analysis: Enabled
+2026-07-25 23:02:29,930 - pod_monitor.main - INFO - AI Provider: mock
+2026-07-25 23:02:29,953 - pod_monitor.k8s_client - INFO - Connected to Kubernetes API via local kubeconfig.
+2026-07-25 23:02:29,962 - pod_monitor.monitor - INFO - Discovered 7 pods in namespace default via K8s API
+2026-07-25 23:02:30,050 - pod_monitor.ssh_client - INFO - Connected to 192.168.49.2
+2026-07-25 23:02:30,050 - pod_monitor.monitor - INFO - SSH: monitoring pod default/log-generator via 192.168.49.2
+2026-07-25 23:02:30,050 - pod_monitor.monitor - INFO - SSH: monitoring pod default/my-pod via 192.168.49.2
+2026-07-25 23:02:30,050 - pod_monitor.monitor - INFO - SSH: monitoring pod default/pod-two via 192.168.49.2
+2026-07-25 23:02:30,050 - pod_monitor.monitor - INFO - SSH: monitoring pod default/stress-test via 192.168.49.2
+2026-07-25 23:02:30,050 - pod_monitor.monitor - INFO - SSH: monitoring pod default/test-one-85d78b6db-fkmzs via 192.168.49.2
+2026-07-25 23:02:30,051 - pod_monitor.monitor - INFO - SSH: monitoring pod default/test-one-85d78b6db-gsfr4 via 192.168.49.2
+2026-07-25 23:02:30,051 - pod_monitor.monitor - INFO - SSH: monitoring pod default/test-one-85d78b6db-prbcd via 192.168.49.2
+2026-07-25 23:02:30,051 - pod_monitor.monitor - INFO - Monitoring 7 pods (mode=ssh)
+2026-07-25 23:04:25,225 - pod_monitor.main - INFO - Starting Pod Monitor with 1 pods (mode=ssh)
+2026-07-25 23:04:25,225 - pod_monitor.main - INFO - AI Analysis: Enabled
+2026-07-25 23:04:25,225 - pod_monitor.main - INFO - AI Provider: mock
+2026-07-25 23:04:25,249 - pod_monitor.k8s_client - INFO - Connected to Kubernetes API via local kubeconfig.
+2026-07-25 23:04:25,258 - pod_monitor.monitor - INFO - Discovered 7 pods in namespace default via K8s API
+2026-07-25 23:04:25,363 - pod_monitor.ssh_client - INFO - Connected to 192.168.49.2
+2026-07-25 23:04:25,363 - pod_monitor.monitor - INFO - SSH: monitoring pod default/log-generator via 192.168.49.2
+2026-07-25 23:04:25,363 - pod_monitor.monitor - INFO - SSH: monitoring pod default/my-pod via 192.168.49.2
+2026-07-25 23:04:25,363 - pod_monitor.monitor - INFO - SSH: monitoring pod default/pod-two via 192.168.49.2
+2026-07-25 23:04:25,363 - pod_monitor.monitor - INFO - SSH: monitoring pod default/stress-test via 192.168.49.2
+2026-07-25 23:04:25,363 - pod_monitor.monitor - INFO - SSH: monitoring pod default/test-one-85d78b6db-fkmzs via 192.168.49.2
+2026-07-25 23:04:25,363 - pod_monitor.monitor - INFO - SSH: monitoring pod default/test-one-85d78b6db-gsfr4 via 192.168.49.2
+2026-07-25 23:04:25,363 - pod_monitor.monitor - INFO - SSH: monitoring pod default/test-one-85d78b6db-prbcd via 192.168.49.2
+2026-07-25 23:04:25,363 - pod_monitor.monitor - INFO - Monitoring 7 pods (mode=ssh)
