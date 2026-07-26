@@ -616,7 +616,7 @@ class PodMonitorUI(App):
                 log_time = log_time.astimezone(IST)
             timestamp = log_time.strftime("%H:%M:%S")
             tag = _log_level_tag(log.level)
-            log_view.add_log(f"[dim]{timestamp}[/dim] {tag} {log.message}", log.level)
+            log_view.add_log(f"[dim]\\[{timestamp}\\][/dim] {tag} {log.message}", log.level)
 
         # ── Network Info ──
         net_info = self.query_one("#network-info", NetworkInfo)

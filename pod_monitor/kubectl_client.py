@@ -347,18 +347,24 @@ class KubectlClient:
 
         # Extract timestamp
         timestamp = datetime.now()
-        time_match = re.search(r"\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?", line)
+        time_match = re.search(r"\d{4}[-/]\d{2}[-/]\d{2}[T ]\d{2}:\d{2}:\d{2}(?:[.,]\d+)?(?:Z|[+-]\d{2}:\d{2}|\s+UTC)?", line)
+        message = line
         if time_match:
             try:
-                ts_str = time_match.group().replace(" ", "T")
-                ts_str = re.sub(r"(\.\d{6})\d+", r"\1", ts_str)
-                timestamp = datetime.fromisoformat(ts_str)
+                ts_str = time_match.group()
+                message = message.replace(ts_str, "", 1).strip()
+                
+                clean_ts = ts_str.replace("/", "-").replace(" UTC", "+00:00").replace("Z", "+00:00")
+                clean_ts = clean_ts.replace(" ", "T")
+                clean_ts = clean_ts.replace(",", ".")
+                clean_ts = re.sub(r"(\.\d{6})\d+", r"\1", clean_ts)
+                timestamp = datetime.fromisoformat(clean_ts)
             except Exception:
                 pass
 
         # Strip leading timestamp + level prefix so the UI doesn't show
         # them twice (they are already rendered from the structured fields).
-        message = self._TS_PREFIX_RE.sub("", line)
+        message = self._TS_PREFIX_RE.sub("", message)
         message = self._LEVEL_PREFIX_RE.sub("", message).strip()
         if not message:
             message = line
