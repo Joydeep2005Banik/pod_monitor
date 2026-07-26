@@ -50,18 +50,3 @@ Ensure your virtual environment is activated and your Kubernetes cluster is runn
 python -m pod_monitor
 ```
 
-### Keyboard Shortcuts / Navigation
-- `Up/Down` or `Click`: Select a pod from the list to view detailed metrics and logs.
-- `R`: Refresh the current view manually.
-- `A`: Toggle AI Analysis.
-- `Q`: Quit the application.
-
-## 🏗️ Architecture
-- **`monitor.py`**: The core orchestrator managing background asynchronous event loops and data aggregation.
-- **`ui.py`**: The presentation layer leveraging `textual` for the interactive TUI.
-- **`k8s_client.py`**: Direct integration with the Kubernetes API for statuses, specs, and metrics.
-- **`kubectl_client.py` / `ssh_client.py`**: Sub-clients for handling command-line executions, log extraction, and fallback node connections.
-- **`ai_analyzer.py`**: Handles log-parsing and anomaly heuristics.
-
-## 📄 License
-MIT License
