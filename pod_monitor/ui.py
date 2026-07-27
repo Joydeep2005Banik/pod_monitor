@@ -200,12 +200,9 @@ class BottomMenuBar(Static):
     def render(self) -> str:
         return (
             "  [reverse]ENTER[/reverse] select   "
-            "[reverse]U[/reverse] info   "
-            "[reverse]T[/reverse] terminate   "
-            "[reverse]K[/reverse] kill   "
-            "[reverse]N[/reverse] nice   "
             "[reverse]R[/reverse] refresh   "
             "[reverse]A[/reverse] toggle ai   "
+            "[reverse]S[/reverse] screenshot   "
             "[reverse]Q[/reverse] quit"
         )
 
@@ -510,10 +507,7 @@ class PodMonitorUI(App):
         Binding("enter", "select_pod", "Select"),
         Binding("r", "refresh", "Refresh"),
         Binding("a", "toggle_ai", "Toggle AI"),
-        Binding("u", "show_info", "Info"),
-        Binding("t", "terminate_pod", "Terminate"),
-        Binding("k", "kill_pod", "Kill"),
-        Binding("n", "nice_pod", "Nice"),
+        Binding("s", "screenshot", "Screenshot"),
     ]
 
     def __init__(self, monitor):
@@ -705,39 +699,14 @@ class PodMonitorUI(App):
         status = "enabled" if self.ai_enabled else "disabled"
         self.notify(f"AI analysis {status}", title="AI Status")
 
-    def action_show_info(self):
-        """Display pod detailed info toast."""
-        if self.selected_pod:
-            ip = self.selected_pod.pod_ip or self.selected_pod.ip or "n/a"
-            node = self.selected_pod.node_name or "unknown"
-            self.notify(
-                f"Pod: {self.selected_pod.name}\nIP: ip\nNode: {node}\nNamespace: {self.selected_pod.namespace}",
-                title="Pod Info",
-                severity="info"
-            )
-        else:
-            self.notify("No pod selected", title="Pod Info", severity="warning")
+    def action_screenshot(self):
+        """Take a screenshot of the application."""
+        import time
+        filename = f"screenshot_{int(time.time())}.svg"
+        self.save_screenshot(filename=filename)
+        self.notify(f"Saved screenshot to {filename}", title="Screenshot", severity="info")
 
-    def action_terminate_pod(self):
-        """Simulate terminating the selected pod."""
-        if self.selected_pod:
-            self.notify(f"Sending SIGTERM to pod {self.selected_pod.name}...", title="Terminate Pod", severity="warning")
-        else:
-            self.notify("No pod selected", title="Terminate Pod", severity="warning")
 
-    def action_kill_pod(self):
-        """Simulate killing the selected pod."""
-        if self.selected_pod:
-            self.notify(f"Sending SIGKILL to pod {self.selected_pod.name}!", title="Kill Pod", severity="error")
-        else:
-            self.notify("No pod selected", title="Kill Pod", severity="warning")
-
-    def action_nice_pod(self):
-        """Simulate renicing the selected pod."""
-        if self.selected_pod:
-            self.notify(f"Renicing container processes in {self.selected_pod.name} to 10", title="Nice Pod", severity="info")
-        else:
-            self.notify("No pod selected", title="Nice Pod", severity="warning")
 
     def action_quit(self):
         """Quit the application."""
