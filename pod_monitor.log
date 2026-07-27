@@ -13028,3 +13028,25 @@ Unable to connect to the server: dial tcp 192.168.49.2:8443: i/o timeout
 2026-07-27 21:42:30,630 - pod_monitor.ssh_client - ERROR - Failed to connect to 192.168.49.2: [Errno 2] No such file or directory: '/home/Joydeep/.minikube/machines/minikube/id_rsa'
 2026-07-27 21:42:30,630 - pod_monitor.monitor - ERROR - Failed to connect to SSH host for pod discovery
 2026-07-27 21:42:30,630 - pod_monitor.monitor - INFO - Monitoring 0 pods (mode=ssh)
+2026-07-27 22:18:18,443 - pod_monitor.main - INFO - Starting Pod Monitor with 1 pods (mode=ssh)
+2026-07-27 22:18:18,443 - pod_monitor.main - INFO - AI Analysis: Enabled
+2026-07-27 22:18:18,443 - pod_monitor.main - INFO - AI Provider: mock
+2026-07-27 22:18:18,467 - pod_monitor.k8s_client - INFO - Connected to Kubernetes API via local kubeconfig.
+2026-07-27 22:18:18,472 - pod_monitor.monitor - INFO - Discovered 4 pods in namespace default via K8s API
+2026-07-27 22:18:18,559 - pod_monitor.ssh_client - INFO - Connected to 192.168.49.2
+2026-07-27 22:18:18,559 - pod_monitor.monitor - INFO - SSH: monitoring pod default/cpu-stress via 192.168.49.2
+2026-07-27 22:18:18,559 - pod_monitor.monitor - INFO - SSH: monitoring pod default/crashing-pod via 192.168.49.2
+2026-07-27 22:18:18,559 - pod_monitor.monitor - INFO - SSH: monitoring pod default/healthy-app via 192.168.49.2
+2026-07-27 22:18:18,559 - pod_monitor.monitor - INFO - SSH: monitoring pod default/log-generator via 192.168.49.2
+2026-07-27 22:18:18,559 - pod_monitor.monitor - INFO - Monitoring 4 pods (mode=ssh)
+2026-07-27 22:19:08,616 - pod_monitor.main - INFO - Starting Pod Monitor with 1 pods (mode=ssh)
+2026-07-27 22:19:08,616 - pod_monitor.main - INFO - AI Analysis: Enabled
+2026-07-27 22:19:08,616 - pod_monitor.main - INFO - AI Provider: mock
+2026-07-27 22:19:08,635 - pod_monitor.k8s_client - INFO - Connected to Kubernetes API via local kubeconfig.
+2026-07-27 22:19:08,641 - pod_monitor.monitor - INFO - Discovered 4 pods in namespace default via K8s API
+2026-07-27 22:19:08,725 - pod_monitor.ssh_client - INFO - Connected to 192.168.49.2
+2026-07-27 22:19:08,725 - pod_monitor.monitor - INFO - SSH: monitoring pod default/cpu-stress via 192.168.49.2
+2026-07-27 22:19:08,725 - pod_monitor.monitor - INFO - SSH: monitoring pod default/crashing-pod via 192.168.49.2
+2026-07-27 22:19:08,725 - pod_monitor.monitor - INFO - SSH: monitoring pod default/healthy-app via 192.168.49.2
+2026-07-27 22:19:08,725 - pod_monitor.monitor - INFO - SSH: monitoring pod default/log-generator via 192.168.49.2
+2026-07-27 22:19:08,725 - pod_monitor.monitor - INFO - Monitoring 4 pods (mode=ssh)
